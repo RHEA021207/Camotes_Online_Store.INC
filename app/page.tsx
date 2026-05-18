@@ -136,6 +136,9 @@ const initialTimeline: TimelineItem[] = [
 
 type ActiveView = "home" | "services" | "e-loan" | "snacks" | "bugas" | "sangla" | "gadgets" | "appliances" | "timeline" | "admin"
 
+// Account Validation Gateway Context State
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false)
+
 export default function Home() {
   const [activeView, setActiveView] = useState<ActiveView>("home")
   const [cartOpen, setCartOpen] = useState(false)
@@ -904,5 +907,17 @@ return (
           </div>
         </div>
       </footer>
+      </div>
+      </footer>
+      
+      {/* Account Verification Gateway Overlay */}
+      <AccountModal 
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onLoginSuccess={(mobile, name) => {
+          console.log("Customer Verified Ledger Context Loaded:", mobile, name)
+        }}
+      />
     </main>
   )
+}
