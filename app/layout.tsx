@@ -11,21 +11,8 @@ export const metadata: Metadata = {
   description: 'Legit & Trusted Camotes Online Store. DTI Registered. E-loans, Bugas, Snacks, Gadgets, Appliances, and Sangla services. Dali ra! Valid ID ra ang kailangan.',
   generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/icon.png', // Simply save your square/circular logo as icon.png inside the public folder
+    apple: '/icon.png',
   },
 }
 
