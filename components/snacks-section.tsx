@@ -67,17 +67,27 @@ const snacks = [
 ]
 
 export function SnacksSection({ onAddToCart, onBack, isFullPage = false }: SnacksSectionProps) {
+  // Quantities map initialization to handle specific dynamic changes per item counter seamlessly
   const [quantities, setQuantities] = useState<Record<string, number>>({})
 
   const updateQuantity = (id: string, delta: number) => {
-    setQuantities(prev => ({
-      ...prev,
-      [id]: Math.max(0, (prev[id] || 0) + delta)
-    }))
+    setQuantities(prev => {
+      // Establish baseline counter to resolve UI placeholder configuration mismatch errors
+      const currentQty = prev[id] !== undefined ? prev[id] : 1
+      const targetQty = currentQty + delta
+      return {
+        ...prev,
+        [id]: Math.max(0, targetQty) // Prevents negative numbers entering the transaction stream
+      }
+    })
   }
 
   const handleAddToCart = (snack: typeof snacks[0]) => {
-    const qty = quantities[snack.id] || 1
+    const qty = quantities[snack.id] !== undefined ? quantities[snack.id] : 1
+    
+    // Explicit conditional guard checking for empty batch processing runs
+    if (qty <= 0) return
+
     onAddToCart({
       id: snack.id,
       name: snack.name,
@@ -85,7 +95,9 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false }: Snack
       quantity: qty,
       image: snack.image,
     })
-    setQuantities(prev => ({ ...prev, [snack.id]: 0 }))
+
+    // Reset items counter to initial baseline validation state instead of dead zero lockouts
+    setQuantities(prev => ({ ...prev, [snack.id]: 1 }))
   }
 
   return (
@@ -108,120 +120,128 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false }: Snack
           Homemade Filipino treats and sweet desserts
         </p>
 
-        {/* Traditional Snacks */}
+        {/* Traditional Snacks Category Grid Layer */}
         <div className="mb-12">
           <h3 className="text-xl font-semibold text-[#98c1d9] mb-4">Traditional Snacks</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {snacks.filter(s => s.category === "Traditional").map((snack) => (
-              <Card key={snack.id} className="bg-[#3d5a80] border-[#98c1d9]/30 overflow-hidden group">
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={snack.image}
-                    alt={snack.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-lg font-semibold text-[#e0fbfc]">{snack.name}</h4>
-                    <span className="text-[#ee6c4d] font-bold text-xl">P{snack.price}</span>
+            {snacks.filter(s => s.category === "Traditional").map((snack) => {
+              const currentItemQty = quantities[snack.id] !== undefined ? quantities[snack.id] : 1
+              return (
+                <Card key={snack.id} className="bg-[#3d5a80] border-[#98c1d9]/30 overflow-hidden group">
+                  <div className="relative h-48 overflow-hidden">
+                    <Image
+                      src={snack.image}
+                      alt={snack.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
-                  <p className="text-sm text-[#98c1d9] mb-4">{snack.description}</p>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-[#293241] rounded-lg">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-lg font-semibold text-[#e0fbfc]">{snack.name}</h4>
+                      <span className="text-[#ee6c4d] font-bold text-xl">P{snack.price}</span>
+                    </div>
+                    <p className="text-sm text-[#98c1d9] mb-4">{snack.description}</p>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 bg-[#293241] rounded-lg">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-transparent"
+                          onClick={() => updateQuantity(snack.id, -1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center text-[#e0fbfc] font-medium">
+                          {currentItemQty}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-transparent"
+                          onClick={() => updateQuantity(snack.id, 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-transparent"
-                        onClick={() => updateQuantity(snack.id, -1)}
+                        className="flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white font-bold"
+                        disabled={currentItemQty === 0}
+                        onClick={() => handleAddToCart(snack)}
                       >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center text-[#e0fbfc]">
-                        {quantities[snack.id] || 1}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-transparent"
-                        onClick={() => updateQuantity(snack.id, 1)}
-                      >
-                        <Plus className="h-4 w-4" />
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Add To Cart
                       </Button>
                     </div>
-                    <Button
-                      className="flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
-                      onClick={() => handleAddToCart(snack)}
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Add
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </div>
 
-        {/* Dessert Tubs */}
+        {/* Dessert Tubs Category Grid Layer */}
         <div>
           <h3 className="text-xl font-semibold text-[#98c1d9] mb-4">Dessert Tubs</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {snacks.filter(s => s.category === "Dessert Tub").map((snack) => (
-              <Card key={snack.id} className="bg-[#3d5a80] border-[#98c1d9]/30 overflow-hidden group">
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={snack.image}
-                    alt={snack.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-2 right-2 bg-[#ee6c4d] text-white text-xs px-2 py-1 rounded">
-                    {snack.unit}
+            {snacks.filter(s => s.category === "Dessert Tub").map((snack) => {
+              const currentItemQty = quantities[snack.id] !== undefined ? quantities[snack.id] : 1
+              return (
+                <Card key={snack.id} className="bg-[#3d5a80] border-[#98c1d9]/30 overflow-hidden group">
+                  <div className="relative h-48 overflow-hidden">
+                    <Image
+                      src={snack.image}
+                      alt={snack.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute top-2 right-2 bg-[#ee6c4d] text-white text-xs px-2 py-1 rounded font-bold">
+                      {snack.unit}
+                    </div>
                   </div>
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-lg font-semibold text-[#e0fbfc]">{snack.name}</h4>
-                    <span className="text-[#ee6c4d] font-bold text-xl">P{snack.price}</span>
-                  </div>
-                  <p className="text-sm text-[#98c1d9] mb-4">{snack.description}</p>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-[#293241] rounded-lg">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-lg font-semibold text-[#e0fbfc]">{snack.name}</h4>
+                      <span className="text-[#ee6c4d] font-bold text-xl">P{snack.price}</span>
+                    </div>
+                    <p className="text-sm text-[#98c1d9] mb-4">{snack.description}</p>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 bg-[#293241] rounded-lg">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-transparent"
+                          onClick={() => updateQuantity(snack.id, -1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center text-[#e0fbfc] font-medium">
+                          {currentItemQty}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-transparent"
+                          onClick={() => updateQuantity(snack.id, 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-transparent"
-                        onClick={() => updateQuantity(snack.id, -1)}
+                        className="flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white font-bold"
+                        disabled={currentItemQty === 0}
+                        onClick={() => handleAddToCart(snack)}
                       >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center text-[#e0fbfc]">
-                        {quantities[snack.id] || 1}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-transparent"
-                        onClick={() => updateQuantity(snack.id, 1)}
-                      >
-                        <Plus className="h-4 w-4" />
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Add To Cart
                       </Button>
                     </div>
-                    <Button
-                      className="flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
-                      onClick={() => handleAddToCart(snack)}
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Add
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </div>
       </div>

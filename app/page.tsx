@@ -16,10 +16,10 @@ import { MapPin } from "lucide-react"
 
 // Sample data
 const initialCustomers: Customer[] = [
-  { id: "COS-101", name: "Juan Dela Cruz", trustScore: "excellent", balance: 0, lastPayment: "2024-01-15" },
-  { id: "COS-102", name: "Maria Santos", trustScore: "good", balance: 500, lastPayment: "2024-01-10" },
+  { id: "COS-101", name: "Juan Dela Cruz", trustScore: "excellent", balance: 0, lastPayment: "2026-01-15" },
+  { id: "COS-102", name: "Maria Santos", trustScore: "good", balance: 500, lastPayment: "2026-01-10" },
   { id: "COS-103", name: "Pedro Garcia", trustScore: "new", balance: 1000, lastPayment: "N/A" },
-  { id: "COS-104", name: "Ana Reyes", trustScore: "good", balance: 0, lastPayment: "2024-01-12" },
+  { id: "COS-104", name: "Ana Reyes", trustScore: "good", balance: 0, lastPayment: "2026-01-12" },
   { id: "COS-105", name: "Jose Mendoza", trustScore: "new", balance: 2000, lastPayment: "N/A" },
 ]
 
@@ -41,10 +41,10 @@ const initialSales: SaleItem[] = [
 ]
 
 const initialTimeline: TimelineItem[] = [
-  { id: "1", type: "loan", name: "E-Loan 3k - Week 2", amount: 550, dueDate: "Jan 20, 2024", status: "unpaid" },
-  { id: "2", type: "purchase", name: "Bugas 25kl", amount: 1499.75, dueDate: "Jan 25, 2024", status: "unpaid" },
-  { id: "3", type: "loan", name: "E-Loan 2k - Week 1", amount: 275, dueDate: "Jan 10, 2024", status: "overdue", penalty: 5.50 },
-  { id: "4", type: "purchase", name: "Mango Float x2", amount: 178, dueDate: "Jan 5, 2024", status: "paid" },
+  { id: "1", type: "loan", name: "E-Loan 3k - Week 2", amount: 550, dueDate: "Jan 20, 2026", status: "unpaid" },
+  { id: "2", type: "purchase", name: "Bugas 25kl", amount: 1499.75, dueDate: "Jan 25, 2026", status: "unpaid" },
+  { id: "3", type: "loan", name: "E-Loan 2k - Week 1", amount: 275, dueDate: "Jan 10, 2026", status: "overdue", penalty: 5.50 },
+  { id: "4", type: "purchase", name: "Mango Float x2", amount: 178, dueDate: "Jan 05, 2026", status: "paid" },
 ]
 
 type ActiveView = "home" | "services" | "e-loan" | "snacks" | "bugas" | "sangla" | "gadgets" | "appliances" | "timeline" | "admin"
@@ -150,33 +150,48 @@ export default function Home() {
     setCart((prev) => prev.filter((i) => i.id !== id))
   }
 
+  // Function to bridge dynamic items directly to Timeline (Java Logic #2)
+  const handleAddToTimelineDirectly = (name: string, totalAmount: number, customDueDate: string, type: "purchase" | "loan" = "purchase") => {
+    const newTimelineItem: TimelineItem = {
+      id: `direct-${Date.now()}`,
+      type: type,
+      name: name,
+      amount: totalAmount,
+      dueDate: customDueDate,
+      status: "unpaid",
+    }
+    setTimeline((prev) => [newTimelineItem, ...prev])
+    setActiveView("timeline")
+  }
+
   const handleCheckout = () => {
-    // Add to timeline as in-cart items
+    // Add to timeline as checkout purchases
     const newTimelineItems: TimelineItem[] = cart.map((item, index) => ({
       id: `cart-${Date.now()}-${index}`,
       type: "purchase" as const,
-      name: item.name,
+      name: `${item.quantity}x ${item.name}`,
       amount: item.price * item.quantity + (item.deliveryFee || 0),
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
       }),
-      status: "in-cart" as const,
+      status: "unpaid" as const, // Changed to unpaid status to follow your transaction pipeline rules
     }))
     setTimeline((prev) => [...newTimelineItems, ...prev])
     setCart([])
     setCartOpen(false)
+    setActiveView("timeline")
   }
 
-  // Loan handler
-  const handleApplyLoan = (amount: number, frequency: string, total: number) => {
+  // Loan handler with computed calculations passed up
+  const handleApplyLoan = (amount: number, frequency: string, total: number, customDueDate?: string) => {
     const newLoan: TimelineItem = {
       id: `loan-${Date.now()}`,
       type: "loan",
       name: `E-Loan P${amount.toLocaleString()} (${frequency})`,
       amount: total,
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+      dueDate: customDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -184,7 +199,6 @@ export default function Home() {
       status: "unpaid",
     }
     setTimeline((prev) => [newLoan, ...prev])
-    // Navigate to timeline after applying
     setActiveView("timeline")
   }
 
@@ -194,7 +208,7 @@ export default function Home() {
       prev.map((item) => (item.id === id ? { ...item, status: "paid" as const } : item))
     )
     
-    // Add to sales
+    // Add to sales log
     const paidItem = timeline.find((i) => i.id === id)
     if (paidItem) {
       const newSale: SaleItem = {
@@ -280,6 +294,7 @@ export default function Home() {
                 deliveryFee: item.deliveryFee,
               })
             }
+            onAddToTimelineDirectly={handleAddToTimelineDirectly} // Passed down for processing calculation logs
             onBack={() => setActiveView("home")}
             isFullPage
           />
@@ -397,7 +412,7 @@ export default function Home() {
             DTI Registered | Business Permit | Since 2022
           </p>
           <a
-            href="https://maps.app.goo.gl/282URg4zgBT9yvAR7"
+            href="https://maps.google.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 mt-4 text-[#98c1d9] hover:text-[#e0fbfc] transition-colors"

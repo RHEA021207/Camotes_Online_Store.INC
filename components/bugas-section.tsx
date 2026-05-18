@@ -25,6 +25,12 @@ interface BugasSectionProps {
     deliveryFee: number
     paymentMode: string
   }) => void
+  onAddToTimelineDirectly: (
+    name: string, 
+    totalAmount: number, 
+    customDueDate: string, 
+    type: "purchase" | "loan"
+  ) => void
   onBack?: () => void
   isFullPage?: boolean
 }
@@ -45,37 +51,118 @@ const paymentModes = [
 ]
 
 const deliveryFeeBase = 50
+const MONTHLY_INTEREST_RATE = 0.05 // 5% Flat Interest per month from Java logic
 
-export function BugasSection({ freeDeliveryEvent, onAddToCart, onBack, isFullPage = false }: BugasSectionProps) {
+export function BugasSection({ 
+  freeDeliveryEvent, 
+  onAddToCart, 
+  onAddToTimelineDirectly, 
+  onBack, 
+  isFullPage = false 
+}: BugasSectionProps) {
   const [selectedQuantity, setSelectedQuantity] = useState<number | null>(null)
   const [deliveryMode, setDeliveryMode] = useState<string>("pickup")
   const [paymentMode, setPaymentMode] = useState<string>("cash")
 
-  const calculateTotal = () => {
+  // Base raw value before microfinance calculations
+  const calculateBasePrincipal = () => {
     if (!selectedQuantity) return 0
     return selectedQuantity * pricePerKg
   }
 
   const getDeliveryFee = () => {
     if (deliveryMode === "pickup" || freeDeliveryEvent) return 0
-    // Dynamic fee based on quantity
     if (selectedQuantity && selectedQuantity >= 25) return deliveryFeeBase * 1.5
     return deliveryFeeBase
   }
 
-  const handleAddToCart = () => {
-    if (!selectedQuantity) return
+  // Java-styled pricing calculations loop rules
+  const getCalculatedTerms = () => {
+    const principal = calculateBasePrincipal()
+    const deliveryFee = getDeliveryFee()
     
-    onAddToCart({
-      id: `bugas-${selectedQuantity}kg`,
-      name: `Bugas ${selectedQuantity}kl`,
-      price: calculateTotal(),
-      quantity: 1,
-      deliveryMode,
-      deliveryFee: getDeliveryFee(),
-      paymentMode,
+    let monthsDuration = 1
+    let totalPaymentsCount = 1
+    let labelText = "Single Payment"
+
+    if (paymentMode === "senimana") {
+      monthsDuration = 1
+      totalPaymentsCount = 4
+      labelText = "4 Weekly Payments"
+    } else if (paymentMode === "kinsenas") {
+      monthsDuration = 1
+      totalPaymentsCount = 2
+      labelText = "2 Payments (Every 15 Days)"
+    } else if (paymentMode === "binuwan") {
+      monthsDuration = 1
+      totalPaymentsCount = 1
+      labelText = "1 Monthly Term"
+    }
+
+    const interestFee = paymentMode !== "cash" ? (principal * MONTHLY_INTEREST_RATE * monthsDuration) : 0
+    const grandTotalAmount = principal + interestFee + deliveryFee
+    const installmentPerInstallmentAmount = grandTotalAmount / totalPaymentsCount
+
+    return {
+      grandTotalAmount,
+      installmentPerInstallmentAmount,
+      totalPaymentsCount,
+      labelText,
+      interestFee
+    }
+  }
+
+  // Microfinance Calendar Math Algorithm
+  const getCalculatedDueDate = () => {
+    const targetDate = new Date()
+    
+    if (paymentMode === "cash") {
+      targetDate.setDate(targetDate.getDate() + 1) // Next day collection window
+    } else if (paymentMode === "senimana") {
+      targetDate.setDate(targetDate.getDate() + 7) // Weekly deadline window
+    } else if (paymentMode === "kinsenas") {
+      targetDate.setDate(targetDate.getDate() + 15) // Bi-weekly term window
+    } else if (paymentMode === "binuwan") {
+      targetDate.setMonth(targetDate.getMonth() + 1) // Full calendar month term window
+    }
+
+    return targetDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     })
   }
+
+  const handleActionExecution = () => {
+    if (!selectedQuantity) return
+    
+    const terms = getCalculatedTerms()
+    const finalDueDate = getCalculatedDueDate()
+
+    if (paymentMode === "cash") {
+      // Direct checkout cart injection pipeline
+      onAddToCart({
+        id: `bugas-${selectedQuantity}kg`,
+        name: `Bugas ${selectedQuantity}kl`,
+        price: calculateBasePrincipal(),
+        quantity: 1,
+        deliveryMode,
+        deliveryFee: getDeliveryFee(),
+        paymentMode,
+      })
+    } else {
+      // Microfinance loop addition to running ledger tracking system lists
+      const paymentPlanName = paymentModes.find(m => m.id === paymentMode)?.label || "Installment"
+      onAddToTimelineDirectly(
+        `🌾 Bugas ${selectedQuantity}kl Plan (${paymentPlanName})`,
+        terms.grandTotalAmount,
+        finalDueDate,
+        "purchase"
+      )
+    }
+  }
+
+  const activeTerms = getCalculatedTerms()
 
   return (
     <section className={`py-12 bg-[#3d5a80]/30 ${isFullPage ? 'min-h-screen' : ''}`} id="bugas">
@@ -152,13 +239,13 @@ export function BugasSection({ freeDeliveryEvent, onAddToCart, onBack, isFullPag
                     <RadioGroupItem value="deliver" id="deliver" className="border-[#98c1d9] text-[#98c1d9]" />
                     <Label htmlFor="deliver" className="text-[#e0fbfc] flex items-center gap-2 cursor-pointer">
                       <Truck className="h-4 w-4" />
-                      Deliver {freeDeliveryEvent ? "(Free!)" : `(+P${getDeliveryFee()})`}
+                      Deliver {freeDeliveryEvent ? "(Free!)" : `(+P${getDeliveryFee().toFixed(2)})`}
                     </Label>
                   </div>
                 </RadioGroup>
               </div>
 
-              {/* Payment Mode */}
+              {/* Payment Mode Selector */}
               <div className="space-y-3">
                 <Label className="text-[#e0fbfc]">Payment Mode</Label>
                 <Select value={paymentMode} onValueChange={setPaymentMode}>
@@ -179,36 +266,64 @@ export function BugasSection({ freeDeliveryEvent, onAddToCart, onBack, isFullPag
                 </Select>
               </div>
 
-              {/* Summary */}
+              {/* Dynamic Math Processing Engine Output Display Component Box */}
               {selectedQuantity && (
-                <div className="bg-[#293241] p-4 rounded-lg space-y-2">
-                  <div className="flex justify-between text-[#98c1d9]">
-                    <span>Rice ({selectedQuantity}kl)</span>
-                    <span>P{calculateTotal().toFixed(2)}</span>
+                <div className="bg-[#293241] p-4 rounded-lg space-y-2 border border-[#98c1d9]/10">
+                  <p className="text-xs font-bold text-yellow-400 uppercase tracking-widest text-center mb-1">
+                    Microfinance Statement Summary
+                  </p>
+                  <div className="flex justify-between text-[#98c1d9] text-sm">
+                    <span>Rice Base Price:</span>
+                    <span>P{calculateBasePrincipal().toFixed(2)}</span>
                   </div>
+                  {paymentMode !== "cash" && (
+                    <div className="flex justify-between text-amber-400 text-sm">
+                      <span>Interest Charge Loop (5% flat):</span>
+                      <span>+P{activeTerms.interestFee.toFixed(2)}</span>
+                    </div>
+                  )}
                   {deliveryMode === "deliver" && (
-                    <div className="flex justify-between text-[#98c1d9]">
-                      <span>Delivery Fee</span>
-                      <span className={freeDeliveryEvent ? "line-through" : ""}>
+                    <div className="flex justify-between text-[#98c1d9] text-sm">
+                      <span>Logistics Delivery Charge:</span>
+                      <span className={freeDeliveryEvent ? "line-through text-green-400" : ""}>
                         P{getDeliveryFee().toFixed(2)}
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between text-[#e0fbfc] font-bold border-t border-[#98c1d9]/30 pt-2">
-                    <span>Total</span>
+                  <hr className="border-[#98c1d9]/20 my-2" />
+                  <div className="flex justify-between text-[#e0fbfc] font-bold text-sm">
+                    <span>Account Schedule Terms:</span>
+                    <span className="text-[#98c1d9]">{activeTerms.labelText}</span>
+                  </div>
+                  <div className="flex justify-between text-emerald-400 font-bold text-sm">
+                    <span>Initial Payment Schedule Due:</span>
+                    <span>{getCalculatedDueDate()}</span>
+                  </div>
+                  <div className="flex justify-between text-[#e0fbfc] font-bold border-t border-[#98c1d9]/30 pt-2 mt-1">
+                    <span>Grand Total To Pay:</span>
                     <span className="text-[#ee6c4d] text-xl">
-                      P{(calculateTotal() + getDeliveryFee()).toFixed(2)}
+                      P{activeTerms.grandTotalAmount.toFixed(2)}
                     </span>
                   </div>
+                  {paymentMode !== "cash" && (
+                    <div className="bg-[#ee6c4d]/10 border border-[#ee6c4d]/30 rounded p-2 mt-2 flex justify-between items-center text-xs">
+                      <span className="text-[#e0fbfc] font-medium">Installment Collection:</span>
+                      <span className="text-[#ee6c4d] font-bold text-sm">P{activeTerms.installmentPerInstallmentAmount.toFixed(2)} / term</span>
+                    </div>
+                  )}
                 </div>
               )}
 
               <Button
-                className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
+                className={`w-full text-white font-bold transition-all ${
+                  paymentMode === "cash" 
+                    ? "bg-[#ee6c4d] hover:bg-[#ee6c4d]/80" 
+                    : "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                }`}
                 disabled={!selectedQuantity}
-                onClick={handleAddToCart}
+                onClick={handleActionExecution}
               >
-                Add to Cart
+                {paymentMode === "cash" ? "Add to Cart" : "Apply for Installment Plan"}
               </Button>
             </CardContent>
           </Card>
