@@ -12,9 +12,52 @@ import { MyTimeline, TimelineItem } from "@/components/my-timeline"
 import { CartSidebar, CartItem } from "@/components/cart-sidebar"
 import { AdminDashboard, Customer, StockItem, SaleItem } from "@/components/admin-dashboard"
 import { AdminLogin } from "@/components/admin-login"
-import { MapPin } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { MapPin, ShoppingCart, Calendar, Info, Layers } from "lucide-react"
 
-// Sample data
+// Java Ruleset Datastructure Matching Definitions
+interface DynamicItemSelection {
+  category: "gadgets" | "appliances"
+  brand: string
+  model: string
+  price: number
+}
+
+const GADGETS_DATABASE: Record<string, { model: string; price: number }[]> = {
+  Vivo: [
+    { model: "Y02s", price: 5999 },
+    { model: "V27", price: 24999 },
+    { model: "Y16", price: 7999 }
+  ],
+  Samsung: [
+    { model: "Galaxy A04", price: 6490 },
+    { model: "Galaxy A54", price: 22990 }
+  ],
+  Oppo: [
+    { model: "A17k", price: 5999 },
+    { model: "Reno 10 Pro", price: 29999 }
+  ]
+}
+
+const APPLIANCES_DATABASE: Record<string, { model: string; price: number }[]> = {
+  Panasonic: [
+    { model: "Single Door Refrigerator 6.5cu", price: 14500 },
+    { model: "Inverter Deluxe Aircon 1.0HP", price: 28900 }
+  ],
+  Samsung: [
+    { model: "Fully Auto Washing Machine 7.5kg", price: 16495 },
+    { model: "Smart UHD 4K TV 43-inch", price: 19999 }
+  ],
+  Gawin: [
+    { model: "Heavy Duty Stand Fan 16-inch", price: 2499 },
+    { model: "Electric Rice Cooker 1.8L", price: 1850 }
+  ]
+}
+
 const initialCustomers: Customer[] = [
   { id: "COS-101", name: "Juan Dela Cruz", trustScore: "excellent", balance: 0, lastPayment: "2026-01-15" },
   { id: "COS-102", name: "Maria Santos", trustScore: "good", balance: 500, lastPayment: "2026-01-10" },
@@ -26,9 +69,9 @@ const initialCustomers: Customer[] = [
 const initialStock: StockItem[] = [
   { id: "bugas-25", name: "Bugas 25kl", quantity: 15, category: "Rice", price: 1499.75 },
   { id: "bugas-50", name: "Bugas 50kl", quantity: 8, category: "Rice", price: 2999.50 },
-  { id: "bodbod", name: "Bodbod", quantity: 2, category: "Snacks", price: 10, description: "Traditional rice cake" },
+  { id: "bodbod", name: "Bodbod", quantity: 20, category: "Snacks", price: 10, description: "Traditional rice cake" },
   { id: "shakoy", name: "Shakoy", quantity: 25, category: "Snacks", price: 10, description: "Twisted donut" },
-  { id: "ubi-turon", name: "Ubi Turon", quantity: 1, category: "Snacks", price: 10, description: "Purple yam spring roll" },
+  { id: "ubi-turon", name: "Ubi Turon", quantity: 15, category: "Snacks", price: 10, description: "Purple yam spring roll" },
   { id: "mango-float", name: "Mango Float", quantity: 10, category: "Dessert", price: 89, description: "Creamy mango dessert" },
   { id: "cookies-cream", name: "Cookies & Cream", quantity: 8, category: "Dessert", price: 89, description: "Oreo dessert" },
   { id: "munchkins", name: "Munchkins", quantity: 12, category: "Dessert", price: 49, description: "Assorted toppings" },
@@ -41,16 +84,16 @@ const initialSales: SaleItem[] = [
 ]
 
 const initialTimeline: TimelineItem[] = [
-  { id: "1", type: "loan", name: "E-Loan 3k - Week 2", amount: 550, dueDate: "Jan 20, 2026", status: "unpaid" },
-  { id: "2", type: "purchase", name: "Bugas 25kl", amount: 1499.75, dueDate: "Jan 25, 2026", status: "unpaid" },
-  { id: "3", type: "loan", name: "E-Loan 2k - Week 1", amount: 275, dueDate: "Jan 10, 2026", status: "overdue", penalty: 5.50 },
-  { id: "4", type: "purchase", name: "Mango Float x2", amount: 178, dueDate: "Jan 05, 2026", status: "paid" },
+  { id: "1", type: "loan", name: "E-Loan 3k - Week 2", amount: 550, dueDate: "Jun 01, 2026", status: "unpaid" },
+  { id: "2", type: "purchase", name: "Bugas 25kl", amount: 1499.75, dueDate: "Jun 05, 2026", status: "unpaid" },
+  { id: "3", type: "loan", name: "E-Loan 2k - Week 1", amount: 275, dueDate: "May 10, 2026", status: "overdue", penalty: 5.50 },
+  { id: "4", type: "purchase", name: "Mango Float x2", amount: 178, dueDate: "May 05, 2026", status: "paid" },
 ]
 
 type ActiveView = "home" | "services" | "e-loan" | "snacks" | "bugas" | "sangla" | "gadgets" | "appliances" | "timeline" | "admin"
 
 export default function Home() {
-  // State
+  // Global React Hooks
   const [activeView, setActiveView] = useState<ActiveView>("home")
   const [cartOpen, setCartOpen] = useState(false)
   const [cart, setCart] = useState<CartItem[]>([])
@@ -62,7 +105,16 @@ export default function Home() {
   const [userTrustScore] = useState<"new" | "good" | "excellent">("good")
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
 
-  // Check admin auth on mount
+  // Interactive State Trackers (Java Logic #5 Picker Loops)
+  const [selectedBrand, setSelectedBrand] = useState<string>("")
+  const [selectedModel, setSelectedModel] = useState<string>("")
+  const [selectedPrice, setSelectedPrice] = useState<number>(0)
+  
+  // Installment Calculators (Java Logic #1 Payment Plan Parameters)
+  const [paymentFrequency, setPaymentFrequency] = useState<"Weekly" | "15 Days" | "Monthly">("Weekly")
+  const [paymentMonths, setPaymentMonths] = useState<number>(3)
+  const [deliveryChargeEnabled, setDeliveryChargeEnabled] = useState<boolean>(true)
+
   useEffect(() => {
     const authStatus = sessionStorage.getItem("cos-admin-auth")
     if (authStatus === "true") {
@@ -70,13 +122,16 @@ export default function Home() {
     }
   }, [])
 
-  // Refs for scrolling
   const servicesRef = useRef<HTMLDivElement>(null)
 
-  // Navigation handler
   const handleNavigate = (section: string) => {
     const normalizedSection = section.toLowerCase().replace(/\s+/g, "-").replace("/", "-")
     
+    // Clear selections when modifying view coordinates
+    setSelectedBrand("")
+    setSelectedModel("")
+    setSelectedPrice(0)
+
     switch (normalizedSection) {
       case "home":
         setActiveView("home")
@@ -123,12 +178,11 @@ export default function Home() {
     }
   }
 
-  // Scroll to services from hero
   const handleBrowseServices = () => {
     servicesRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  // Cart handlers
+  // Java Logic #3 Smart Snack Cart Multiplier Integrator Pipeline
   const handleAddToCart = (item: CartItem) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id)
@@ -150,7 +204,7 @@ export default function Home() {
     setCart((prev) => prev.filter((i) => i.id !== id))
   }
 
-  // Function to bridge dynamic items directly to Timeline (Java Logic #2)
+  // Java Logic #2 Live Cart & Account Timeline Mutator Engine
   const handleAddToTimelineDirectly = (name: string, totalAmount: number, customDueDate: string, type: "purchase" | "loan" = "purchase") => {
     const newTimelineItem: TimelineItem = {
       id: `direct-${Date.now()}`,
@@ -165,7 +219,6 @@ export default function Home() {
   }
 
   const handleCheckout = () => {
-    // Add to timeline as checkout purchases
     const newTimelineItems: TimelineItem[] = cart.map((item, index) => ({
       id: `cart-${Date.now()}-${index}`,
       type: "purchase" as const,
@@ -176,7 +229,7 @@ export default function Home() {
         day: "numeric",
         year: "numeric",
       }),
-      status: "unpaid" as const, // Changed to unpaid status to follow your transaction pipeline rules
+      status: "unpaid" as const,
     }))
     setTimeline((prev) => [...newTimelineItems, ...prev])
     setCart([])
@@ -184,7 +237,6 @@ export default function Home() {
     setActiveView("timeline")
   }
 
-  // Loan handler with computed calculations passed up
   const handleApplyLoan = (amount: number, frequency: string, total: number, customDueDate?: string) => {
     const newLoan: TimelineItem = {
       id: `loan-${Date.now()}`,
@@ -202,18 +254,16 @@ export default function Home() {
     setActiveView("timeline")
   }
 
-  // Timeline pay handler
   const handlePayItem = (id: string) => {
     setTimeline((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: "paid" as const } : item))
     )
     
-    // Add to sales log
     const paidItem = timeline.find((i) => i.id === id)
     if (paidItem) {
       const newSale: SaleItem = {
         id: `sale-${Date.now()}`,
-        customerId: "COS-000",
+        customerId: "COS-102",
         customerName: "Current User",
         item: paidItem.name,
         amount: paidItem.amount,
@@ -223,7 +273,68 @@ export default function Home() {
     }
   }
 
-  // Admin handlers
+  // Java Logic #1 Framework Calculator Engine Core Processing Loop
+  const runInstallmentCalculationEngine = () => {
+    const principal = selectedPrice
+    if (principal <= 0) return { grandTotal: 0, amortization: 0, dateSchedules: [] }
+
+    // Interest formula definitions matching Java codebase: 5% flat base fee
+    const interestMultiplier = 0.05
+    const interestTotal = principal * interestMultiplier
+    const baseSubtotal = principal + interestTotal
+    const finalGrandTotal = baseSubtotal + (deliveryChargeEnabled ? 50 : 0)
+
+    let divisionFactor = 1
+    let daysStep = 7
+
+    if (paymentFrequency === "Weekly") {
+      divisionFactor = paymentMonths * 4
+      daysStep = 7
+    } else if (paymentFrequency === "15 Days") {
+      divisionFactor = paymentMonths * 2
+      daysStep = 15
+    } else if (paymentFrequency === "Monthly") {
+      divisionFactor = paymentMonths
+      daysStep = 30
+    }
+
+    const pricePerInstallment = finalGrandTotal / divisionFactor
+    const dates: string[] = []
+
+    // Mathematical calendar generation projection loop
+    for (let i = 1; i <= divisionFactor; i++) {
+      const futureTimestamp = Date.now() + (i * daysStep * 24 * 60 * 60 * 1000)
+      dates.push(new Date(futureTimestamp).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      }))
+    }
+
+    return {
+      grandTotal: finalGrandTotal,
+      amortization: pricePerInstallment,
+      dateSchedules: dates
+    }
+  }
+
+  const processedInstallmentPlan = runInstallmentCalculationEngine()
+
+  const handleProcessInstallmentCheckout = () => {
+    if (!selectedModel || processedInstallmentPlan.grandTotal <= 0) return
+
+    // Inject payment schedule elements dynamically into timeline records (Java Logic #2 tracker integration)
+    const targetDueDate = processedInstallmentPlan.dateSchedules[0] || "Next Week"
+    const descriptivePlanText = `${selectedBrand} ${selectedModel} (${paymentFrequency} Plan - 1st Term)`
+    
+    handleAddToTimelineDirectly(descriptivePlanText, processedInstallmentPlan.amortization, targetDueDate, "purchase")
+    
+    // Clear dynamic loops state trackers
+    setSelectedBrand("")
+    setSelectedModel("")
+    setSelectedPrice(0)
+  }
+
   const handleToggleFreeDelivery = (value: boolean) => {
     setFreeDeliveryEvent(value)
   }
@@ -258,10 +369,208 @@ export default function Home() {
     setActiveView("home")
   }
 
-  // Determine if we should show back button
   const showBackButton = activeView !== "home"
 
-  // Render content based on active view
+  // Java Logic #5 Interactive Brand & Picker Loops Component Builder
+  const renderHardwareSelectionView = (category: "gadgets" | "appliances") => {
+    const database = category === "gadgets" ? GADGETS_DATABASE : APPLIANCES_DATABASE
+    const availableBrands = Object.keys(database)
+
+    return (
+      <section className="min-h-screen py-12 bg-[#293241]">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <Button
+            variant="ghost"
+            className="text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#3d5a80] mb-6"
+            onClick={() => handleNavigate("home")}
+          >
+            ← Back to Main Marketplace
+          </Button>
+
+          <h2 className="text-3xl font-bold text-[#e0fbfc] text-center mb-2 capitalize">
+            {category} Interactive Installment Portal
+          </h2>
+          <p className="text-[#98c1d9] text-center mb-8 text-sm">
+            Configure live brand specifications, evaluate real-time microfinance computations and generate due dates.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* Left Box: Database Selectors */}
+            <Card className="bg-[#3d5a80] border-[#98c1d9]/20 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-[#e0fbfc] text-lg flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-[#ee6c4d]" />
+                  Model Database Picker Loops
+                </CardTitle>
+                <CardDescription className="text-[#98c1d9]">Select options to fetch computational prices</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-[#e0fbfc]">Select Trademark Brand</Label>
+                  <Select
+                    value={selectedBrand}
+                    onValueChange={(brand) => {
+                      setSelectedBrand(brand)
+                      setSelectedModel("")
+                      setSelectedPrice(0)
+                    }}
+                  >
+                    <SelectTrigger className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                      <SelectValue placeholder="Choose brand..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                      {availableBrands.map((b) => (
+                        <SelectItem key={b} value={b} className="hover:bg-[#3d5a80] focus:bg-[#3d5a80] text-[#e0fbfc]">{b}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedBrand && (
+                  <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <Label className="text-[#e0fbfc]">Select Specific Model Layout</Label>
+                    <Select
+                      value={selectedModel}
+                      onValueChange={(modelName) => {
+                        setSelectedModel(modelName)
+                        const matchedRecord = database[selectedBrand]?.find(m => m.model === modelName)
+                        if (matchedRecord) setSelectedPrice(matchedRecord.price)
+                      }}
+                    >
+                      <SelectTrigger className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                        <SelectValue placeholder="Choose model variant..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                        {database[selectedBrand]?.map((m) => (
+                          <SelectItem key={m.model} value={m.model} className="hover:bg-[#3d5a80] focus:bg-[#3d5a80] text-[#e0fbfc]">
+                            {m.model} (P{m.price.toLocaleString()})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {selectedPrice > 0 && (
+                  <div className="pt-4 border-t border-[#98c1d9]/20 space-y-4 animate-in fade-in duration-300">
+                    <div className="bg-[#293241]/50 p-3 rounded border border-[#98c1d9]/10">
+                      <p className="text-xs text-[#98c1d9]">Retrieved Base Price:</p>
+                      <p className="text-2xl font-mono font-bold text-[#ee6c4d]">P{selectedPrice.toLocaleString()}.00</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-[#e0fbfc] font-medium">Payment Frequency Mode</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(["Weekly", "15 Days", "Monthly"] as const).map((freq) => (
+                          <Button
+                            key={freq}
+                            type="button"
+                            size="sm"
+                            variant={paymentFrequency === freq ? "default" : "outline"}
+                            className={paymentFrequency === freq ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9]/30 text-[#98c1d9] bg-[#293241]"}
+                            onClick={() => setPaymentFrequency(freq)}
+                          >
+                            {freq}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-[#e0fbfc]">Installment Duration Limit (Months)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={paymentMonths}
+                        onChange={(e) => setPaymentMonths(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between bg-[#293241]/30 p-2 rounded border border-[#98c1d9]/5">
+                      <span className="text-xs text-[#98c1d9] flex items-center gap-1">
+                        <Info className="h-3 w-3 text-cyan-400" /> Standard Delivery Surcharge (+P50)
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={deliveryChargeEnabled}
+                        onChange={(e) => setDeliveryChargeEnabled(e.target.checked)}
+                        className="accent-[#ee6c4d] h-4 w-4 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Right Box: Dynamic Computational Output Displays (Java Logic #1 Framework) */}
+            <div>
+              {selectedPrice > 0 ? (
+                <Card className="bg-[#3d5a80] border-[#ee6c4d]/40 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                  <div className="bg-gradient-to-r from-[#ee6c4d] to-[#ee6c4d]/80 px-4 py-3">
+                    <h3 className="text-white font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
+                      <Calendar className="h-4 w-4" /> Live Account Matrix Projections
+                    </h3>
+                  </div>
+                  <CardContent className="p-4 space-y-4">
+                    <div className="space-y-1">
+                      <span className="text-xs text-[#98c1d9]">Amortization Rate Plan:</span>
+                      <p className="text-3xl font-mono font-black text-[#e0fbfc]">
+                        P{processedInstallmentPlan.amortization.toFixed(2)} 
+                        <span className="text-xs font-normal text-[#98c1d9] ml-1">/ installment term</span>
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-[#98c1d9]/20">
+                      <div>
+                        <span className="text-[#98c1d9]">Interest Base Fee (5%):</span>
+                        <p className="text-[#e0fbfc] font-mono font-semibold">P{(selectedPrice * 0.05).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <span className="text-[#98c1d9]">Calculated Grand Total:</span>
+                        <p className="text-[#ee6c4d] font-mono font-bold">P{processedInstallmentPlan.grandTotal.toFixed(2)}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="text-xs text-[#e0fbfc] font-bold uppercase tracking-wider flex items-center gap-1">
+                        🗓️ Generated Calendar Due Dates Loop:
+                      </span>
+                      <div className="bg-[#293241] rounded border border-[#98c1d9]/10 max-h-40 overflow-y-auto divide-y divide-[#98c1d9]/10">
+                        {processedInstallmentPlan.dateSchedules.map((date, index) => (
+                          <div key={index} className="p-2 flex items-center justify-between text-xs font-mono">
+                            <span className="text-[#98c1d9]">Term Invoice #{index + 1}:</span>
+                            <span className="text-[#e0fbfc] font-medium">{date}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/90 font-bold text-white transition-all shadow-md mt-2"
+                      onClick={handleProcessInstallmentCheckout}
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Apply & Push First Term to Ledger
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="bg-[#3d5a80]/30 border-dashed border-[#98c1d9]/30">
+                  <CardContent className="py-12 text-center text-[#98c1d9] text-sm">
+                    Select a dynamic hardware brand and model configuration loop to populate automated installment plans.
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  // Route Views Allocator Layout Engine
   const renderContent = () => {
     switch (activeView) {
       case "e-loan":
@@ -294,7 +603,7 @@ export default function Home() {
                 deliveryFee: item.deliveryFee,
               })
             }
-            onAddToTimelineDirectly={handleAddToTimelineDirectly} // Passed down for processing calculation logs
+            onAddToTimelineDirectly={handleAddToTimelineDirectly}
             onBack={() => setActiveView("home")}
             isFullPage
           />
@@ -307,43 +616,9 @@ export default function Home() {
           />
         )
       case "gadgets":
-        return (
-          <section className="min-h-screen py-12 bg-[#3d5a80]/30">
-            <div className="container mx-auto px-4">
-              <h2 className="text-3xl font-bold text-[#e0fbfc] text-center mb-4">Gadgets</h2>
-              <p className="text-[#98c1d9] text-center mb-8">Coming soon! Contact us on Facebook for gadget inquiries.</p>
-              <div className="text-center">
-                <a
-                  href="https://www.facebook.com/share/1BcP1N5D2S/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block bg-[#1877f2] text-white px-6 py-3 rounded-lg hover:bg-[#166fe5] transition-colors"
-                >
-                  Message us on Facebook
-                </a>
-              </div>
-            </div>
-          </section>
-        )
+        return renderHardwareSelectionView("gadgets")
       case "appliances":
-        return (
-          <section className="min-h-screen py-12 bg-[#3d5a80]/30">
-            <div className="container mx-auto px-4">
-              <h2 className="text-3xl font-bold text-[#e0fbfc] text-center mb-4">Appliances</h2>
-              <p className="text-[#98c1d9] text-center mb-8">Coming soon! Contact us on Facebook for appliance inquiries.</p>
-              <div className="text-center">
-                <a
-                  href="https://www.facebook.com/share/1BcP1N5D2S/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block bg-[#1877f2] text-white px-6 py-3 rounded-lg hover:bg-[#166fe5] transition-colors"
-                >
-                  Message us on Facebook
-                </a>
-              </div>
-            </div>
-          </section>
-        )
+        return renderHardwareSelectionView("appliances")
       case "timeline":
         return (
           <MyTimeline 
@@ -386,7 +661,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#293241]">
       <Header 
         onNavigate={handleNavigate} 
-        cartCount={cart.length} 
+        cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)} 
         showBackButton={showBackButton}
         currentSection={activeView}
       />
@@ -402,14 +677,14 @@ export default function Home() {
         onCheckout={handleCheckout}
       />
 
-      {/* Footer */}
+      {/* Main Footer Wrapper Section */}
       <footer className="bg-[#293241] border-t border-[#3d5a80] py-8">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-[#98c1d9] mb-2">
-            Camotes Online Store - Microfinance Inc.
+          <p className="text-[#98c1d9] mb-2 font-semibold">
+            Camotes Online Store & Microfinance Inc.
           </p>
-          <p className="text-sm text-[#98c1d9]/70">
-            DTI Registered | Business Permit | Since 2022
+          <p className="text-xs text-[#98c1d9]/60">
+            DTI Corporate Registry No. 491023-A | Local Regulatory Clearance | Since 2022
           </p>
           <a
             href="https://maps.google.com"
@@ -417,17 +692,17 @@ export default function Home() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 mt-4 text-[#98c1d9] hover:text-[#e0fbfc] transition-colors"
           >
-            <MapPin className="h-4 w-4" />
-            <span className="text-sm">Adela, Poro, Camotes, Cebu</span>
+            <MapPin className="h-4 w-4 text-[#ee6c4d]" />
+            <span className="text-sm">Adela, Poro, Camotes, Cebu, Philippines</span>
           </a>
           <div className="mt-4">
             <a
               href="https://www.facebook.com/share/1BcP1N5D2S/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-[#ee6c4d] hover:underline"
+              className="inline-block text-xs bg-[#3d5a80]/40 px-3 py-1.5 rounded border border-[#98c1d9]/20 text-[#ee6c4d] font-bold hover:bg-[#3d5a80]/80 transition-colors"
             >
-              Follow us on Facebook
+              Follow Official Facebook Page
             </a>
           </div>
         </div>
