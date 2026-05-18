@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, ShoppingCart, Calendar, Info, Layers, ArrowDown } from "lucide-react"
+import AccountModal from "@/components/components/account-modal"
 
 // Java-Sourced Dataset Definitions (Updated with requested models & Speakers)
 const GADGETS_DATABASE: Record<string, { model: string; price: number }[]> = {
@@ -902,22 +903,18 @@ return (
               rel="noopener noreferrer"
               className="inline-block text-[11px] bg-[#ee6c4d]/10 px-4 py-2 rounded border border-[#ee6c4d]/20 text-[#ee6c4d] font-bold hover:bg-[#ee6c4d] hover:text-white transition-all tracking-wider uppercase"
             >
-              Follow Official Facebook Page
-            </a>
-          </div>
-        </div>
-      </footer>
+             Follow Official Facebook Page
+        </a>
       </div>
-      </footer>
-      
-      {/* Account Verification Gateway Overlay */}
-      <AccountModal 
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        onLoginSuccess={(mobile, name) => {
-          console.log("Customer Verified Ledger Context Loaded:", mobile, name)
-        }}
-      />
-    </main>
-  )
-}
+    </div>
+  </footer>
+
+  {/* Account Verification Gateway Overlay */}
+  <AccountModal 
+    isOpen={authModalOpen}
+    onClose={() => setAuthModalOpen(false)}
+    onLoginSuccess={(mobile: string, name: string) => {
+      console.log("Customer Verified Ledger Context Loaded:", mobile, name)
+    }}
+  />
+</main>
