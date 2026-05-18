@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MapPin, ShoppingCart, Calendar, Info, Layers, ArrowDown } from "lucide-react"
+import { MapPin, ShoppingCart, Calendar, Info, Layers, ArrowDown, Search } from "lucide-react"
 import AccountModal from "@/components/components/account-modal"
 
 // Java-Sourced Dataset Definitions (Updated with requested models & Speakers)
@@ -75,23 +75,6 @@ const APPLIANCES_DATABASE: Record<string, { model: string; price: number }[]> = 
     { model: "JBL Go 4 Portable Bluetooth Speaker", price: 2399 },
     { model: "Sony SRS-XE200 Wireless Speaker", price: 6499 },
     { model: "Ace Professional Active Stage Speaker", price: 11500 }
-  ]
-}
-
-const APPLIANCES_DATABASE: Record<string, { model: string; price: number }[]> = {
-  Refrigerator: [
-    { model: "Samsung No-Frost", price: 18500 },
-    { model: "LG Single Door", price: 12400 },
-    { model: "Panasonic Inverter", price: 25000 }
-  ],
-  TV: [
-    { model: "Skyworth 32\"", price: 7800 },
-    { model: "Samsung 43\" UHD", price: 19900 },
-    { model: "Sony 55\" Bravia", price: 35000 }
-  ],
-  "Washing Machine": [
-    { model: "Sharp 7.5kg Tub", price: 5400 },
-    { model: "Panasonic Front Load", price: 22100 }
   ],
   Aircon: [
     { model: "Carrier 1.0HP Window", price: 15500 },
@@ -137,9 +120,6 @@ const initialTimeline: TimelineItem[] = [
 
 type ActiveView = "home" | "services" | "e-loan" | "snacks" | "bugas" | "sangla" | "gadgets" | "appliances" | "timeline" | "admin"
 
-// Account Validation Gateway Context State
-  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false)
-
 export default function Home() {
   const [activeView, setActiveView] = useState<ActiveView>("home")
   const [cartOpen, setCartOpen] = useState(false)
@@ -151,12 +131,13 @@ export default function Home() {
   const [freeDeliveryEvent, setFreeDeliveryEvent] = useState(false)
   const [userTrustScore] = useState<"new" | "good" | "excellent">("good")
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false)
 
- // Hardware Model Database Pickers
+  // Hardware Model Database Pickers
   const [selectedBrand, setSelectedBrand] = useState<string>("")
   const [selectedModel, setSelectedModel] = useState<string>("")
   const [selectedPrice, setSelectedPrice] = useState<number>(0)
-  const [paymentOption, setPaymentOption] = useState<"now" | "later">("now") // <-- Added right here!
+  const [paymentOption, setPaymentOption] = useState<"now" | "later">("now")
   
   // Real-time Installment Calculation Properties
   const [paymentFrequency, setPaymentFrequency] = useState<"Weekly" | "15 Days" | "Monthly">("Weekly")
@@ -318,12 +299,10 @@ export default function Home() {
     }
   }
 
- // Dynamic Installment Calculation Loop Logic
   const runInstallmentCalculationEngine = () => {
     const principal = selectedPrice
     if (principal <= 0) return { grandTotal: 0, amortization: 0, dateSchedules: [] }
 
-    // Pay Now Ruleset Evaluation
     if (paymentOption === "now") {
       const finalGrandTotal = principal + (deliveryChargeEnabled ? 50 : 0)
       return {
@@ -333,7 +312,6 @@ export default function Home() {
       }
     }
 
-    // Pay Later Ruleset Evaluation
     const interestRatePerMonth = 0.05
     const totalWithInterest = principal * (1 + (interestRatePerMonth * paymentMonths))
     const finalGrandTotal = totalWithInterest + (deliveryChargeEnabled ? 50 : 0)
@@ -424,7 +402,6 @@ export default function Home() {
 
   const showBackButton = activeView !== "home"
 
- // Refactored Picker Component populated from Java arrays
   const renderHardwareSelectionView = (category: "gadgets" | "appliances") => {
     const database = category === "gadgets" ? GADGETS_DATABASE : APPLIANCES_DATABASE
     const availableCategoriesOrBrands = Object.keys(database)
@@ -746,7 +723,7 @@ export default function Home() {
     }
   }
 
-return (
+  return (
     <main className="min-h-screen bg-[#293241]">
       <Header 
         onNavigate={handleNavigate} 
@@ -903,18 +880,20 @@ return (
               rel="noopener noreferrer"
               className="inline-block text-[11px] bg-[#ee6c4d]/10 px-4 py-2 rounded border border-[#ee6c4d]/20 text-[#ee6c4d] font-bold hover:bg-[#ee6c4d] hover:text-white transition-all tracking-wider uppercase"
             >
-             Follow Official Facebook Page
-        </a>
-      </div>
-    </div>
-  </footer>
+              Follow Official Facebook Page
+            </a>
+          </div>
+        </div>
+      </footer>
 
-  {/* Account Verification Gateway Overlay */}
-  <AccountModal 
-    isOpen={authModalOpen}
-    onClose={() => setAuthModalOpen(false)}
-    onLoginSuccess={(mobile: string, name: string) => {
-      console.log("Customer Verified Ledger Context Loaded:", mobile, name)
-    }}
-  />
-</main>
+      {/* Account Verification Gateway Overlay */}
+      <AccountModal 
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onLoginSuccess={(mobile: string, name: string) => {
+          console.log("Customer Verified Ledger Context Loaded:", mobile, name)
+        }}
+      />
+    </main>
+  )
+}
