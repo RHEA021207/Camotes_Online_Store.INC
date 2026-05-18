@@ -754,34 +754,47 @@ return (
       {activeView === "home" ? (
         <>
           {/* 1. Full-screen 100vh Hero Section */}
-          <section className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden bg-white">
-            {/* Background Graphic Asset with Darker Overlay */}
+          <section className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a202c]">
+            {/* White Office/Interior Background Image Asset */}
             <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700"
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-transform duration-1000 scale-100"
               style={{ backgroundImage: `url('/for the background.jpg')` }} 
             />
-            {/* Dark aesthetic overlay mask to make text the clear "main character" */}
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
+            {/* Balanced Dark Aesthetic Overlay Mask for Perfect Contrast */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-[#293241]" />
 
             {/* Essential Metadata Badges Container */}
-            <div className="absolute top-24 z-10 flex flex-col items-center gap-2 px-4 max-w-2xl text-center">
-              <span className="bg-[#ee6c4d] text-white font-bold text-xs sm:text-sm px-4 py-1.5 rounded-full shadow-lg animate-bounce">
-                Dali ra! Valid ID ra ang kailangan. Kuha na sa imong kinahanglanon!
-              </span>
-              <div className="flex gap-2 justify-center mt-1">
-                <span className="bg-white/20 text-white backdrop-blur-sm font-bold text-[10px] sm:text-xs uppercase tracking-wider px-2.5 py-1 rounded border border-white/20">DTI Registered</span>
-                <span className="bg-white/20 text-white backdrop-blur-sm font-bold text-[10px] sm:text-xs uppercase tracking-wider px-2.5 py-1 rounded border border-white/20">Business Permit</span>
-                <span className="bg-white/20 text-white backdrop-blur-sm font-bold text-[10px] sm:text-xs uppercase tracking-wider px-2.5 py-1 rounded border border-white/20">Always Open</span>
+            <div className="absolute top-28 z-10 flex flex-col items-center gap-3 px-4 w-full max-w-3xl text-center select-none">
+              
+              {/* Prominent "Dali ra!" Core Function Badge */}
+              <div className="relative group animate-in fade-in slide-in-from-top-4 duration-700">
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#ee6c4d] to-amber-500 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
+                <span className="relative block bg-gradient-to-r from-[#ee6c4d] to-[#d65a31] text-white font-black text-xs sm:text-sm md:text-base px-6 py-2 rounded-full shadow-2xl border border-white/20 tracking-wide">
+                  ✨ Dali ra! Valid ID ra ang kailangan. Kuha na sa imong kinahanglanon!
+                </span>
+              </div>
+
+              {/* Trust Badges */}
+              <div className="flex flex-wrap gap-2 justify-center mt-1 animate-in fade-in duration-1000 delay-300">
+                <span className="bg-white/10 text-[#e0fbfc] backdrop-blur-md font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1 rounded-md border border-white/10 shadow-sm">
+                  DTI Registered
+                </span>
+                <span className="bg-white/10 text-[#e0fbfc] backdrop-blur-md font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1 rounded-md border border-white/10 shadow-sm">
+                  Business Permit
+                </span>
+                <span className="bg-white/10 text-[#e0fbfc] backdrop-blur-md font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1 rounded-md border border-white/10 shadow-sm">
+                  Always Open
+                </span>
               </div>
             </div>
 
             {/* Centered Main Character Headline Typography */}
-            <div className="relative z-10 text-center px-4 max-w-3xl select-none">
-              <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-white tracking-tight drop-shadow-2xl">
+            <div className="relative z-10 text-center px-4 max-w-4xl select-none mt-12">
+              <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-white tracking-tight drop-shadow-[0_8px_8px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-700">
                 Hello! How can I help you?
               </h1>
-              <p className="text-[#e0fbfc]/90 font-medium text-base sm:text-lg mt-6 max-w-md mx-auto drop-shadow-md">
-                Camotes Premium Microfinance Terminal — Select an item ledger or service pipeline below to begin.
+              <p className="text-[#e0fbfc]/80 font-medium text-base sm:text-lg md:text-xl mt-6 max-w-xl mx-auto drop-shadow-md">
+                Camotes Premium Microfinance Terminal — Select an active category ledger below to compute your flexible installment plan instantly.
               </p>
             </div>
 
@@ -790,25 +803,43 @@ return (
               className="absolute bottom-10 z-10 flex flex-col items-center gap-2 cursor-pointer group"
               onClick={handleBrowseServices}
             >
-              <span className="text-xs text-white/80 font-bold tracking-widest uppercase group-hover:text-white transition-colors">
+              <span className="text-xs text-white/60 font-bold tracking-widest uppercase group-hover:text-white transition-colors duration-300">
                 Browse Services
               </span>
-              <ArrowDown className="h-5 w-5 text-[#ee6c4d] animate-bounce" />
+              <div className="p-2 rounded-full bg-white/5 border border-white/10 group-hover:border-[#ee6c4d]/50 group-hover:bg-white/10 transition-all duration-300">
+                <ArrowDown className="h-5 w-5 text-[#ee6c4d] animate-bounce" />
+              </div>
             </div>
           </section>
 
-          {/* 2. Services Grid Layout (Pushed completely out of initial viewport frame) */}
-          <div ref={servicesRef} className="bg-[#293241] py-20 border-t border-[#3d5a80]">
-            <ServicesGrid onSelectService={handleNavigate} />
+          {/* 2. Services Grid Layout (Pushed completely out of initial viewport frame into scroll section) */}
+          <div ref={servicesRef} className="bg-[#293241] py-24 border-t border-[#3d5a80]/60">
+            <div className="container mx-auto px-4">
+              <ServicesGrid onSelectService={handleNavigate} />
+            </div>
           </div>
         </>
       ) : (
-        /* Render Dedicated Category Sub-views instead of inline anchor scrolls */
-        <div className="pt-16 min-h-[calc(100vh-80px)] bg-[#293241]">
-          {renderContent()}
+        /* 3. Dedicated Isolated Context Sub-views instead of inline scrolling */
+        <div className="pt-20 min-h-[calc(100vh-80px)] bg-[#293241] animate-in fade-in duration-300">
+          <div className="container mx-auto px-4 pb-16">
+            {/* Global Sticky Sub-Page Back Navigation */}
+            <div className="mb-6">
+              <button
+                onClick={() => handleNavigate("home")}
+                className="inline-flex items-center gap-2 bg-[#1e2530] text-[#e0fbfc] hover:text-white px-5 py-2.5 rounded-xl border border-[#3d5a80] hover:border-[#ee6c4d] transition-all font-bold text-sm shadow-md group"
+              >
+                <span className="transform group-hover:-translate-x-1 transition-transform">←</span> 
+                Back to Home Landing
+              </button>
+            </div>
+            
+            {renderContent()}
+          </div>
         </div>
       )}
 
+      {/* Cart Slider Drawer */}
       <CartSidebar
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -819,33 +850,34 @@ return (
       />
 
       {/* Corporate Compliance Ledger Footer Unit */}
-      <footer className="bg-[#1e2530] border-t border-[#3d5a80]/40 py-10">
-        <div className="container mx-auto px-4 text-center space-y-4">
+      <footer className="bg-[#1e2530] border-t border-[#3d5a80]/40 py-12">
+        <div className="container mx-auto px-4 text-center space-y-5">
           <p className="text-[#98c1d9] font-bold text-base tracking-wide">
             Camotes Online Store & Microfinance Inc.
           </p>
           <p className="text-xs text-[#98c1d9]/50 max-w-md mx-auto leading-relaxed">
-            DTI Corporate Registry No. 491023-A | Local Regulatory Clearance | Standard Operational Compliance Protocol | Since 2022
+            DTI Corporate Registry No. 491023-A | Local Regulatory Operational Compliance Protocol | Since 2022
           </p>
           
+          {/* Linked Address Node */}
           <div className="pt-2">
             <a
               href="https://maps.app.goo.gl/282URg4zgBT9yvAR7"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#293241]/80 px-4 py-2 rounded-full border border-[#98c1d9]/10 text-[#98c1d9] hover:text-[#e0fbfc] hover:border-[#ee6c4d]/50 transition-all shadow-sm"
+              className="inline-flex items-center gap-2 bg-[#293241]/80 px-5 py-2.5 rounded-full border border-[#98c1d9]/10 text-[#98c1d9] hover:text-white hover:border-[#ee6c4d]/50 transition-all shadow-md group"
             >
-              <MapPin className="h-4 w-4 text-[#ee6c4d]" />
-              <span className="text-xs font-semibold tracking-wide">Adela, Poro, Camotes, Cebu</span>
+              <MapPin className="h-4 w-4 text-[#ee6c4d] group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold tracking-wide">Adela, Poro, Camotes, Cebu</span>
             </a>
           </div>
 
-          <div className="mt-4">
+          <div className="pt-2">
             <a
               href="https://www.facebook.com/share/1BcP1N5D2S/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-xs bg-[#3d5a80]/40 px-3 py-1.5 rounded border border-[#98c1d9]/20 text-[#ee6c4d] font-bold hover:bg-[#3d5a80]/80 transition-colors"
+              className="inline-block text-[11px] bg-[#ee6c4d]/10 px-4 py-2 rounded border border-[#ee6c4d]/20 text-[#ee6c4d] font-bold hover:bg-[#ee6c4d] hover:text-white transition-all tracking-wider uppercase"
             >
               Follow Official Facebook Page
             </a>
