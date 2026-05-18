@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MapPin, ShoppingCart, Calendar, Info, Layers } from "lucide-react"
+import { MapPin, ShoppingCart, Calendar, Info, Layers, ArrowDown } from "lucide-react"
 
 // Java-Sourced Dataset Definitions (Updated with requested models & Speakers)
 const GADGETS_DATABASE: Record<string, { model: string; price: number }[]> = {
@@ -742,7 +742,7 @@ export default function Home() {
     }
   }
 
-  return (
+ return (
     <main className="min-h-screen bg-[#293241]">
       <Header 
         onNavigate={handleNavigate} 
@@ -751,40 +751,103 @@ export default function Home() {
         currentSection={activeView}
       />
       
-      {renderContent()}
+      {/* Dynamic View Engine Routing */}
+      {activeView === "home" ? (
+        <>
+          {/* 1. Full-screen 100vh Hero Section */}
+          <section className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden bg-white">
+            {/* Background Graphic Asset with Darker Overlay */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 hover:scale-105"
+              style={{ backgroundImage: `url('/for the background.jpg')` }} 
+            />
+            {/* Subtle dark aesthetic overlay mask for high text readability */}
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
 
+            {/* Essential Metadata Badges Container */}
+            <div className="absolute top-24 z-10 flex flex-wrap justify-center gap-2 px-4 max-w-2xl text-center">
+              <span className="bg-[#ee6c4d] text-white font-bold text-xs px-3 py-1 rounded-full shadow-md animate-bounce">
+                Dali ra! Valid ID ra ang kailangan. Kuha na sa imong kinahanglanon!
+              </span>
+              <div className="flex gap-1.5 justify-center mt-1">
+                <span className="bg-white/90 text-[#293241] font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border border-white/20">DTI Registered</span>
+                <span className="bg-white/90 text-[#293241] font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border border-white/20">Business Permit</span>
+                <span className="bg-white/90 text-[#293241] font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border border-white/20">Always Open</span>
+              </div>
+            </div>
+
+            {/* Centered Main Character Headline Typography */}
+            <div className="relative z-10 text-center px-4 max-w-3xl select-none">
+              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-tight drop-shadow-xl animate-in fade-in zoom-in-95 duration-500">
+                Hello! How can I help you?
+              </h1>
+              <p className="text-[#e0fbfc]/90 font-medium text-sm sm:text-base mt-4 max-w-md mx-auto drop-shadow">
+                Camotes Premium Microfinance Terminal — Select an item ledger or service pipeline below to begin.
+              </p>
+            </div>
+
+            {/* Scroll Indicator Prompt */}
+            <div 
+              className="absolute bottom-8 z-10 flex flex-col items-center gap-1 cursor-pointer group animate-ping-subtle"
+              onClick={handleBrowseServices}
+            >
+              <span className="text-xs text-white/70 font-semibold tracking-widest uppercase group-hover:text-white transition-colors">
+                Explore Services
+              </span>
+              <ArrowDown className="h-5 w-5 text-[#ee6c4d] animate-bounce" />
+            </div>
+          </section>
+
+          {/* 2. Services Grid Layout (Pushed down into secondary screen viewport scroll tier) */}
+          <div ref={servicesRef} className="bg-[#293241] py-16 border-t border-[#3d5a80]">
+            <ServicesGrid onSelectService={handleNavigate} />
+          </div>
+        </>
+      ) : (
+        /* Render Dedicated Category Context Views instead of inline anchor scrolls */
+        <div className="pt-16 min-h-[calc(100vh-80px)] bg-[#293241]">
+          {renderContent()}
+        </div>
+      )}
+
+      {/* Cart Processing Sliding Drawer Interface overlay component */}
       <CartSidebar
         isOpen={cartOpen}
-        onClose={() => setCartOpen(false)}
+        onClose={() => !cartOpen}
         items={cart}
         onUpdateQuantity={handleUpdateCartQuantity}
         onRemoveItem={handleRemoveFromCart}
         onCheckout={handleCheckout}
       />
 
-      <footer className="bg-[#293241] border-t border-[#3d5a80] py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-[#98c1d9] mb-2 font-semibold">
+      {/* Corporate Compliance Ledger Footer Unit */}
+      <footer className="bg-[#1e2530] border-t border-[#3d5a80]/40 py-10">
+        <div className="container mx-auto px-4 text-center space-y-4">
+          <p className="text-[#98c1d9] font-bold text-base tracking-wide">
             Camotes Online Store & Microfinance Inc.
           </p>
-          <p className="text-xs text-[#98c1d9]/60">
-            DTI Corporate Registry No. 491023-A | Local Regulatory Clearance | Since 2022
+          <p className="text-xs text-[#98c1d9]/50 max-w-md mx-auto leading-relaxed">
+            DTI Corporate Registry No. 491023-A | Local Regulatory Clearance | Standard Operational Compliance Protocol | Since 2022
           </p>
-          <a
-            href="https://maps.google.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 mt-4 text-[#98c1d9] hover:text-[#e0fbfc] transition-colors"
-          >
-            <MapPin className="h-4 w-4 text-[#ee6c4d]" />
-            <span className="text-sm">Adela, Poro, Camotes, Cebu, Philippines</span>
-          </a>
-          <div className="mt-4">
+          
+          <div className="pt-2">
+            <a
+              href="https://maps.app.goo.gl/282URg4zgBT9yvAR7"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-[#293241]/80 px-4 py-2 rounded-full border border-[#98c1d9]/10 text-[#98c1d9] hover:text-[#e0fbfc] hover:border-[#ee6c4d]/50 transition-all shadow-sm"
+            >
+              <MapPin className="h-4 w-4 text-[#ee6c4d]" />
+              <span className="text-xs font-semibold tracking-wide">Adela, Poro, Camotes, Cebu</span>
+            </a>
+          </div>
+
+          <div className="pt-2">
             <a
               href="https://www.facebook.com/share/1BcP1N5D2S/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-xs bg-[#3d5a80]/40 px-3 py-1.5 rounded border border-[#98c1d9]/20 text-[#ee6c4d] font-bold hover:bg-[#3d5a80]/80 transition-colors"
+              className="inline-block text-[11px] bg-[#ee6c4d]/10 px-4 py-1.5 rounded border border-[#ee6c4d]/30 text-[#ee6c4d] font-bold hover:bg-[#ee6c4d] hover:text-white transition-all tracking-wider uppercase"
             >
               Follow Official Facebook Page
             </a>
@@ -793,4 +856,3 @@ export default function Home() {
       </footer>
     </main>
   )
-}
