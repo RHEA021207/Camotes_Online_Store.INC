@@ -763,8 +763,8 @@ return (
             {/* Balanced Dark Aesthetic Overlay Mask for Strong Contrast */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-[#293241]" />
 
-            {/* Retained Key Information & Essential Badges Container */}
-            <div className="absolute top-28 z-10 flex flex-col items-center gap-3 px-4 w-full max-w-3xl text-center select-none">
+            {/* Essential Badges Container */}
+            <div className="absolute top-24 z-10 flex flex-col items-center gap-3 px-4 w-full max-w-3xl text-center select-none">
               
               {/* Prominent "Dali ra!" Core Badge */}
               <div className="relative group animate-in fade-in slide-in-from-top-4 duration-700">
@@ -790,12 +790,31 @@ return (
 
             {/* Centered Main Character Headline Typography */}
             <div className="relative z-10 text-center px-4 max-w-4xl select-none mt-12">
-              <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-white tracking-tight drop-shadow-[0_8px_8px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-700">
+              <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-white tracking-tight drop-shadow-[0_8px_8px_rgba(0,0,0,0.8)]">
                 Hello! How can I help you?
               </h1>
-              <p className="text-[#e0fbfc]/80 font-medium text-base sm:text-lg md:text-xl mt-6 max-w-xl mx-auto drop-shadow-md">
-                Camotes Premium Microfinance Terminal — Select an active ledger category below to compute variables instantly.
+              <p className="text-[#e0fbfc]/80 font-medium text-sm sm:text-base md:text-lg mt-4 max-w-xl mx-auto drop-shadow-md">
+                Your neighborhood digital ledger. Buy now, pay over time. Track every peso (₱) with confidence.
               </p>
+
+              {/* Interactive Dashboard Control Buttons */}
+              <div className="mt-8 flex flex-wrap justify-center items-center gap-4">
+                <button
+                  onClick={handleBrowseServices}
+                  className="bg-[#ee6c4d] hover:bg-[#d65a31] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-2"
+                >
+                  <Layers className="h-4 w-4" />
+                  Browse Services
+                </button>
+                
+                <button
+                  onClick={() => setAuthModalOpen(true)}
+                  className="bg-[#293241]/90 hover:bg-[#3d5a80] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all transform hover:scale-105 border border-[#3d5a80] flex items-center gap-2"
+                >
+                  <Search className="h-4 w-4 text-[#98c1d9]" />
+                  Find My Account
+                </button>
+              </div>
             </div>
 
             {/* Scroll Indicator Prompt */}
@@ -804,7 +823,7 @@ return (
               onClick={handleBrowseServices}
             >
               <span className="text-xs text-white/60 font-bold tracking-widest uppercase group-hover:text-white transition-colors duration-300">
-                Browse Services
+                Explore Terminal
               </span>
               <div className="p-2 rounded-full bg-white/5 border border-white/10 group-hover:border-[#ee6c4d]/50 group-hover:bg-white/10 transition-all duration-300">
                 <ArrowDown className="h-5 w-5 text-[#ee6c4d] animate-bounce" />
