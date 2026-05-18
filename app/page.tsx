@@ -753,20 +753,20 @@ return (
       
       {activeView === "home" ? (
         <>
-          {/* 1. Full-screen 100vh Hero Section */}
+          {/* 1. Main Hero Landing Section (Full-screen 100vh) */}
           <section className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a202c]">
             {/* White Office/Interior Background Image Asset */}
             <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-transform duration-1000 scale-100"
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-transform duration-1000"
               style={{ backgroundImage: `url('/for the background.jpg')` }} 
             />
-            {/* Balanced Dark Aesthetic Overlay Mask for Perfect Contrast */}
+            {/* Balanced Dark Aesthetic Overlay Mask for Strong Contrast */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-[#293241]" />
 
-            {/* Essential Metadata Badges Container */}
+            {/* Retained Key Information & Essential Badges Container */}
             <div className="absolute top-28 z-10 flex flex-col items-center gap-3 px-4 w-full max-w-3xl text-center select-none">
               
-              {/* Prominent "Dali ra!" Core Function Badge */}
+              {/* Prominent "Dali ra!" Core Badge */}
               <div className="relative group animate-in fade-in slide-in-from-top-4 duration-700">
                 <div className="absolute -inset-1 bg-gradient-to-r from-[#ee6c4d] to-amber-500 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
                 <span className="relative block bg-gradient-to-r from-[#ee6c4d] to-[#d65a31] text-white font-black text-xs sm:text-sm md:text-base px-6 py-2 rounded-full shadow-2xl border border-white/20 tracking-wide">
@@ -774,7 +774,7 @@ return (
                 </span>
               </div>
 
-              {/* Trust Badges */}
+              {/* Minor Operational Badges */}
               <div className="flex flex-wrap gap-2 justify-center mt-1 animate-in fade-in duration-1000 delay-300">
                 <span className="bg-white/10 text-[#e0fbfc] backdrop-blur-md font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1 rounded-md border border-white/10 shadow-sm">
                   DTI Registered
@@ -794,7 +794,7 @@ return (
                 Hello! How can I help you?
               </h1>
               <p className="text-[#e0fbfc]/80 font-medium text-base sm:text-lg md:text-xl mt-6 max-w-xl mx-auto drop-shadow-md">
-                Camotes Premium Microfinance Terminal — Select an active category ledger below to compute your flexible installment plan instantly.
+                Camotes Premium Microfinance Terminal — Select an active ledger category below to compute variables instantly.
               </p>
             </div>
 
@@ -812,7 +812,7 @@ return (
             </div>
           </section>
 
-          {/* 2. Services Grid Layout (Pushed completely out of initial viewport frame into scroll section) */}
+          {/* 2. Services Grid Layout (Pushed down entirely out of initial viewport frame) */}
           <div ref={servicesRef} className="bg-[#293241] py-24 border-t border-[#3d5a80]/60">
             <div className="container mx-auto px-4">
               <ServicesGrid onSelectService={handleNavigate} />
@@ -820,17 +820,18 @@ return (
           </div>
         </>
       ) : (
-        /* 3. Dedicated Isolated Context Sub-views instead of inline scrolling */
+        /* 3. Dedicated Isolated Sub-views (Replaces inline page scrolling) */
         <div className="pt-20 min-h-[calc(100vh-80px)] bg-[#293241] animate-in fade-in duration-300">
           <div className="container mx-auto px-4 pb-16">
-            {/* Global Sticky Sub-Page Back Navigation */}
+            
+            {/* Prominent Back to Home Button on Dedicated View layouts */}
             <div className="mb-6">
               <button
                 onClick={() => handleNavigate("home")}
                 className="inline-flex items-center gap-2 bg-[#1e2530] text-[#e0fbfc] hover:text-white px-5 py-2.5 rounded-xl border border-[#3d5a80] hover:border-[#ee6c4d] transition-all font-bold text-sm shadow-md group"
               >
                 <span className="transform group-hover:-translate-x-1 transition-transform">←</span> 
-                Back to Home Landing
+                Back to Home
               </button>
             </div>
             
@@ -839,7 +840,7 @@ return (
         </div>
       )}
 
-      {/* Cart Slider Drawer */}
+      {/* Sidebar Shopping Drawer interface */}
       <CartSidebar
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -849,7 +850,7 @@ return (
         onCheckout={handleCheckout}
       />
 
-      {/* Corporate Compliance Ledger Footer Unit */}
+      {/* Compliance Footer Unit */}
       <footer className="bg-[#1e2530] border-t border-[#3d5a80]/40 py-12">
         <div className="container mx-auto px-4 text-center space-y-5">
           <p className="text-[#98c1d9] font-bold text-base tracking-wide">
@@ -859,7 +860,7 @@ return (
             DTI Corporate Registry No. 491023-A | Local Regulatory Operational Compliance Protocol | Since 2022
           </p>
           
-          {/* Linked Address Node */}
+          {/* Footer Address Node linked directly to your requested URL */}
           <div className="pt-2">
             <a
               href="https://maps.app.goo.gl/282URg4zgBT9yvAR7"
