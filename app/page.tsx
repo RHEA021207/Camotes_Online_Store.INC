@@ -19,17 +19,17 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, ShoppingCart, Calendar, Info, Layers } from "lucide-react"
 
-// Java-Sourced Dataset Definitions (Extracted directly from Java Main Engine code definitions)
+// Java-Sourced Dataset Definitions (Updated with requested models & Speakers)
 const GADGETS_DATABASE: Record<string, { model: string; price: number }[]> = {
   Vivo: [
     { model: "Y02s", price: 5999 },
-    { model: "V27", price: 24999 },
-    { model: "Y36", price: 12999 }
+    { model: "Y36", price: 12999 },
+    { model: "V27", price: 24999 }
   ],
   Realme: [
     { model: "C55", price: 8999 },
-    { model: "11 Pro", price: 19999 },
-    { model: "10", price: 11999 }
+    { model: "10", price: 11999 },
+    { model: "11 Pro", price: 19999 }
   ],
   Infinix: [
     { model: "Hot 30i", price: 4599 },
@@ -50,8 +50,30 @@ const GADGETS_DATABASE: Record<string, { model: string; price: number }[]> = {
     { model: "Pova 5", price: 8499 }
   ],
   Nubia: [
-    { model: "Red Magic 8 Pro", price: 42999 },
-    { model: "Neo 5G", price: 9999 }
+    { model: "Neo 5G", price: 9999 },
+    { model: "Red Magic 8 Pro", price: 42999 }
+  ]
+}
+
+const APPLIANCES_DATABASE: Record<string, { model: string; price: number }[]> = {
+  Refrigerators: [
+    { model: "LG Single Door", price: 12400 },
+    { model: "Samsung No-Frost", price: 18500 },
+    { model: "Panasonic Inverter", price: 25000 }
+  ],
+  "Washing Machines": [
+    { model: "Sharp 7.5kg Single Tub", price: 5400 },
+    { model: "Panasonic Front Load", price: 22100 }
+  ],
+  TVs: [
+    { model: "Skyworth 32\" Smart TV", price: 7800 },
+    { model: "Samsung 43\" UHD Smart TV", price: 19900 },
+    { model: "Sony 55\" Bravia 4K TV", price: 35000 }
+  ],
+  Speakers: [
+    { model: "JBL Go 4 Portable Bluetooth Speaker", price: 2399 },
+    { model: "Sony SRS-XE200 Wireless Speaker", price: 6499 },
+    { model: "Ace Professional Active Stage Speaker", price: 11500 }
   ]
 }
 
@@ -126,10 +148,11 @@ export default function Home() {
   const [userTrustScore] = useState<"new" | "good" | "excellent">("good")
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
 
-  // Hardware Model Database Pickers
+ // Hardware Model Database Pickers
   const [selectedBrand, setSelectedBrand] = useState<string>("")
   const [selectedModel, setSelectedModel] = useState<string>("")
   const [selectedPrice, setSelectedPrice] = useState<number>(0)
+  const [paymentOption, setPaymentOption] = useState<"now" | "later">("now") // <-- Added right here!
   
   // Real-time Installment Calculation Properties
   const [paymentFrequency, setPaymentFrequency] = useState<"Weekly" | "15 Days" | "Monthly">("Weekly")
@@ -291,11 +314,22 @@ export default function Home() {
     }
   }
 
-  // Dynamic Installment Calculation Loop Logic
+ // Dynamic Installment Calculation Loop Logic
   const runInstallmentCalculationEngine = () => {
     const principal = selectedPrice
     if (principal <= 0) return { grandTotal: 0, amortization: 0, dateSchedules: [] }
 
+    // Pay Now Ruleset Evaluation
+    if (paymentOption === "now") {
+      const finalGrandTotal = principal + (deliveryChargeEnabled ? 50 : 0)
+      return {
+        grandTotal: finalGrandTotal,
+        amortization: finalGrandTotal,
+        dateSchedules: ["Today (Outright Settlement)"]
+      }
+    }
+
+    // Pay Later Ruleset Evaluation
     const interestRatePerMonth = 0.05
     const totalWithInterest = principal * (1 + (interestRatePerMonth * paymentMonths))
     const finalGrandTotal = totalWithInterest + (deliveryChargeEnabled ? 50 : 0)
@@ -338,14 +372,16 @@ export default function Home() {
   const handleProcessInstallmentCheckout = () => {
     if (!selectedModel || processedInstallmentPlan.grandTotal <= 0) return
 
-    const targetDueDate = processedInstallmentPlan.dateSchedules[0] || "Next Week"
-    const descriptivePlanText = `${selectedBrand} ${selectedModel} (${paymentFrequency} Installment Plan)`
+    const targetDueDate = paymentOption === "now" ? "Today" : (processedInstallmentPlan.dateSchedules[0] || "Next Week")
+    const paymentModeLabel = paymentOption === "now" ? "Paid Outright" : `${paymentFrequency} Installment Plan`
+    const descriptivePlanText = `${selectedBrand} ${selectedModel} (${paymentModeLabel})`
     
     handleAddToTimelineDirectly(descriptivePlanText, processedInstallmentPlan.grandTotal, targetDueDate, "purchase")
     
     setSelectedBrand("")
     setSelectedModel("")
     setSelectedPrice(0)
+    setPaymentOption("now")
   }
 
   const handleToggleFreeDelivery = (value: boolean) => {
@@ -384,7 +420,7 @@ export default function Home() {
 
   const showBackButton = activeView !== "home"
 
-  // Refactored Picker Component populated from Java arrays
+ // Refactored Picker Component populated from Java arrays
   const renderHardwareSelectionView = (category: "gadgets" | "appliances") => {
     const database = category === "gadgets" ? GADGETS_DATABASE : APPLIANCES_DATABASE
     const availableCategoriesOrBrands = Object.keys(database)
@@ -395,7 +431,12 @@ export default function Home() {
           <Button
             variant="ghost"
             className="text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#3d5a80] mb-6"
-            onClick={() => handleNavigate("home")}
+            onClick={() => {
+              setSelectedBrand("")
+              setSelectedModel("")
+              setSelectedPrice(0)
+              handleNavigate("home")
+            }}
           >
             ← Back to Main Marketplace
           </Button>
@@ -470,35 +511,63 @@ export default function Home() {
                       <p className="text-2xl font-mono font-bold text-[#ee6c4d]">P{selectedPrice.toLocaleString()}.00</p>
                     </div>
 
-                    <div className="space-y-3">
-                      <Label className="text-[#e0fbfc] font-medium">Payment Plan Cycle</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(["Weekly", "15 Days", "Monthly"] as const).map((freq) => (
-                          <Button
-                            key={freq}
-                            type="button"
-                            size="sm"
-                            variant={paymentFrequency === freq ? "default" : "outline"}
-                            className={paymentFrequency === freq ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9]/30 text-[#98c1d9] bg-[#293241]"}
-                            onClick={() => setPaymentFrequency(freq)}
-                          >
-                            {freq}
-                          </Button>
-                        ))}
+                    <div className="space-y-2">
+                      <Label className="text-[#e0fbfc] font-medium">Settlement Terms Method</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={paymentOption === "now" ? "default" : "outline"}
+                          className={paymentOption === "now" ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9]/30 text-[#98c1d9] bg-[#293241]"}
+                          onClick={() => setPaymentOption("now")}
+                        >
+                          Pay Now (0% Fee)
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={paymentOption === "later" ? "default" : "outline"}
+                          className={paymentOption === "later" ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9]/30 text-[#98c1d9] bg-[#293241]"}
+                          onClick={() => setPaymentOption("later")}
+                        >
+                          Pay Later (Micro)
+                        </Button>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-[#e0fbfc]">Duration Period Limit (Months)</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={12}
-                        value={paymentMonths}
-                        onChange={(e) => setPaymentMonths(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
-                      />
-                    </div>
+                    {paymentOption === "later" && (
+                      <div className="space-y-4 animate-in fade-in duration-200">
+                        <div className="space-y-3">
+                          <Label className="text-[#e0fbfc] font-medium">Payment Plan Cycle</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {(["Weekly", "15 Days", "Monthly"] as const).map((freq) => (
+                              <Button
+                                key={freq}
+                                type="button"
+                                size="sm"
+                                variant={paymentFrequency === freq ? "default" : "outline"}
+                                className={paymentFrequency === freq ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9]/30 text-[#98c1d9] bg-[#293241]"}
+                                onClick={() => setPaymentFrequency(freq)}
+                              >
+                                {freq}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[#e0fbfc]">Duration Period Limit (Months)</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={12}
+                            value={paymentMonths}
+                            onChange={(e) => setPaymentMonths(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between bg-[#293241]/30 p-2 rounded border border-[#98c1d9]/5">
                       <span className="text-xs text-[#98c1d9] flex items-center gap-1">
@@ -529,14 +598,18 @@ export default function Home() {
                       <span className="text-xs text-[#98c1d9]">Rate Installment Plan:</span>
                       <p className="text-3xl font-mono font-black text-[#e0fbfc]">
                         P{processedInstallmentPlan.amortization.toFixed(2)} 
-                        <span className="text-xs font-normal text-[#98c1d9] ml-1">/ installment term</span>
+                        <span className="text-xs font-normal text-[#98c1d9] ml-1">
+                          {paymentOption === "now" ? "/ outright sum" : "/ installment term"}
+                        </span>
                       </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-[#98c1d9]/20">
                       <div>
-                        <span className="text-[#98c1d9]">Interest Fee (5% per month):</span>
-                        <p className="text-[#e0fbfc] font-mono font-semibold">P{(selectedPrice * 0.05 * paymentMonths).toFixed(2)}</p>
+                        <span className="text-[#98c1d9]">Interest Fee {paymentOption === "now" ? "(0%)" : "(5% per month)"}:</span>
+                        <p className="text-[#e0fbfc] font-mono font-semibold">
+                          P{paymentOption === "now" ? "0.00" : (selectedPrice * 0.05 * paymentMonths).toFixed(2)}
+                        </p>
                       </div>
                       <div>
                         <span className="text-[#98c1d9]">Calculated Ledger Total:</span>
@@ -551,7 +624,9 @@ export default function Home() {
                       <div className="bg-[#293241] rounded border border-[#98c1d9]/10 max-h-40 overflow-y-auto divide-y divide-[#98c1d9]/10">
                         {processedInstallmentPlan.dateSchedules.map((date, index) => (
                           <div key={index} className="p-2 flex items-center justify-between text-xs font-mono">
-                            <span className="text-[#98c1d9]">Due Cycle Invoice #{index + 1}:</span>
+                            <span className="text-[#98c1d9]">
+                              {paymentOption === "now" ? "Fulfillment Statement:" : `Due Cycle Invoice #${index + 1}:`}
+                            </span>
                             <span className="text-[#e0fbfc] font-medium">{date}</span>
                           </div>
                         ))}
