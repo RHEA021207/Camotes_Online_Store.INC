@@ -19,42 +19,64 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, ShoppingCart, Calendar, Info, Layers } from "lucide-react"
 
-// Java Ruleset Datastructure Matching Definitions
-interface DynamicItemSelection {
-  category: "gadgets" | "appliances"
-  brand: string
-  model: string
-  price: number
-}
-
+// Java-Sourced Dataset Definitions (Extracted directly from Java Main Engine code definitions)
 const GADGETS_DATABASE: Record<string, { model: string; price: number }[]> = {
   Vivo: [
     { model: "Y02s", price: 5999 },
     { model: "V27", price: 24999 },
-    { model: "Y16", price: 7999 }
+    { model: "Y36", price: 12999 }
   ],
-  Samsung: [
-    { model: "Galaxy A04", price: 6490 },
-    { model: "Galaxy A54", price: 22990 }
+  Realme: [
+    { model: "C55", price: 8999 },
+    { model: "11 Pro", price: 19999 },
+    { model: "10", price: 11999 }
+  ],
+  Infinix: [
+    { model: "Hot 30i", price: 4599 },
+    { model: "Note 30 5G", price: 9499 },
+    { model: "Zero Ultra", price: 21000 }
+  ],
+  Redmi: [
+    { model: "A2+", price: 3999 },
+    { model: "Note 12", price: 8999 },
+    { model: "Xiaomi 13 Pro", price: 48000 }
   ],
   Oppo: [
-    { model: "A17k", price: 5999 },
-    { model: "Reno 10 Pro", price: 29999 }
+    { model: "A17", price: 7999 },
+    { model: "Reno 10", price: 23999 }
+  ],
+  Tecno: [
+    { model: "Spark 10 Pro", price: 7299 },
+    { model: "Pova 5", price: 8499 }
+  ],
+  Nubia: [
+    { model: "Red Magic 8 Pro", price: 42999 },
+    { model: "Neo 5G", price: 9999 }
   ]
 }
 
 const APPLIANCES_DATABASE: Record<string, { model: string; price: number }[]> = {
-  Panasonic: [
-    { model: "Single Door Refrigerator 6.5cu", price: 14500 },
-    { model: "Inverter Deluxe Aircon 1.0HP", price: 28900 }
+  Refrigerator: [
+    { model: "Samsung No-Frost", price: 18500 },
+    { model: "LG Single Door", price: 12400 },
+    { model: "Panasonic Inverter", price: 25000 }
   ],
-  Samsung: [
-    { model: "Fully Auto Washing Machine 7.5kg", price: 16495 },
-    { model: "Smart UHD 4K TV 43-inch", price: 19999 }
+  TV: [
+    { model: "Skyworth 32\"", price: 7800 },
+    { model: "Samsung 43\" UHD", price: 19900 },
+    { model: "Sony 55\" Bravia", price: 35000 }
   ],
-  Gawin: [
-    { model: "Heavy Duty Stand Fan 16-inch", price: 2499 },
-    { model: "Electric Rice Cooker 1.8L", price: 1850 }
+  "Washing Machine": [
+    { model: "Sharp 7.5kg Tub", price: 5400 },
+    { model: "Panasonic Front Load", price: 22100 }
+  ],
+  Aircon: [
+    { model: "Carrier 1.0HP Window", price: 15500 },
+    { model: "Koppel 1.5HP Inverter", price: 28900 }
+  ],
+  Cabinet: [
+    { model: "Orocan 4-Drawer", price: 2800 },
+    { model: "Wooden Wardrobe", price: 5500 }
   ]
 }
 
@@ -93,7 +115,6 @@ const initialTimeline: TimelineItem[] = [
 type ActiveView = "home" | "services" | "e-loan" | "snacks" | "bugas" | "sangla" | "gadgets" | "appliances" | "timeline" | "admin"
 
 export default function Home() {
-  // Global React Hooks
   const [activeView, setActiveView] = useState<ActiveView>("home")
   const [cartOpen, setCartOpen] = useState(false)
   const [cart, setCart] = useState<CartItem[]>([])
@@ -105,12 +126,12 @@ export default function Home() {
   const [userTrustScore] = useState<"new" | "good" | "excellent">("good")
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
 
-  // Interactive State Trackers (Java Logic #5 Picker Loops)
+  // Hardware Model Database Pickers
   const [selectedBrand, setSelectedBrand] = useState<string>("")
   const [selectedModel, setSelectedModel] = useState<string>("")
   const [selectedPrice, setSelectedPrice] = useState<number>(0)
   
-  // Installment Calculators (Java Logic #1 Payment Plan Parameters)
+  // Real-time Installment Calculation Properties
   const [paymentFrequency, setPaymentFrequency] = useState<"Weekly" | "15 Days" | "Monthly">("Weekly")
   const [paymentMonths, setPaymentMonths] = useState<number>(3)
   const [deliveryChargeEnabled, setDeliveryChargeEnabled] = useState<boolean>(true)
@@ -127,7 +148,6 @@ export default function Home() {
   const handleNavigate = (section: string) => {
     const normalizedSection = section.toLowerCase().replace(/\s+/g, "-").replace("/", "-")
     
-    // Clear selections when modifying view coordinates
     setSelectedBrand("")
     setSelectedModel("")
     setSelectedPrice(0)
@@ -182,7 +202,6 @@ export default function Home() {
     servicesRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  // Java Logic #3 Smart Snack Cart Multiplier Integrator Pipeline
   const handleAddToCart = (item: CartItem) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id)
@@ -204,7 +223,6 @@ export default function Home() {
     setCart((prev) => prev.filter((i) => i.id !== id))
   }
 
-  // Java Logic #2 Live Cart & Account Timeline Mutator Engine
   const handleAddToTimelineDirectly = (name: string, totalAmount: number, customDueDate: string, type: "purchase" | "loan" = "purchase") => {
     const newTimelineItem: TimelineItem = {
       id: `direct-${Date.now()}`,
@@ -273,16 +291,14 @@ export default function Home() {
     }
   }
 
-  // Java Logic #1 Framework Calculator Engine Core Processing Loop
+  // Dynamic Installment Calculation Loop Logic
   const runInstallmentCalculationEngine = () => {
     const principal = selectedPrice
     if (principal <= 0) return { grandTotal: 0, amortization: 0, dateSchedules: [] }
 
-    // Interest formula definitions matching Java codebase: 5% flat base fee
-    const interestMultiplier = 0.05
-    const interestTotal = principal * interestMultiplier
-    const baseSubtotal = principal + interestTotal
-    const finalGrandTotal = baseSubtotal + (deliveryChargeEnabled ? 50 : 0)
+    const interestRatePerMonth = 0.05
+    const totalWithInterest = principal * (1 + (interestRatePerMonth * paymentMonths))
+    const finalGrandTotal = totalWithInterest + (deliveryChargeEnabled ? 50 : 0)
 
     let divisionFactor = 1
     let daysStep = 7
@@ -301,7 +317,6 @@ export default function Home() {
     const pricePerInstallment = finalGrandTotal / divisionFactor
     const dates: string[] = []
 
-    // Mathematical calendar generation projection loop
     for (let i = 1; i <= divisionFactor; i++) {
       const futureTimestamp = Date.now() + (i * daysStep * 24 * 60 * 60 * 1000)
       dates.push(new Date(futureTimestamp).toLocaleDateString("en-US", {
@@ -323,13 +338,11 @@ export default function Home() {
   const handleProcessInstallmentCheckout = () => {
     if (!selectedModel || processedInstallmentPlan.grandTotal <= 0) return
 
-    // Inject payment schedule elements dynamically into timeline records (Java Logic #2 tracker integration)
     const targetDueDate = processedInstallmentPlan.dateSchedules[0] || "Next Week"
-    const descriptivePlanText = `${selectedBrand} ${selectedModel} (${paymentFrequency} Plan - 1st Term)`
+    const descriptivePlanText = `${selectedBrand} ${selectedModel} (${paymentFrequency} Installment Plan)`
     
-    handleAddToTimelineDirectly(descriptivePlanText, processedInstallmentPlan.amortization, targetDueDate, "purchase")
+    handleAddToTimelineDirectly(descriptivePlanText, processedInstallmentPlan.grandTotal, targetDueDate, "purchase")
     
-    // Clear dynamic loops state trackers
     setSelectedBrand("")
     setSelectedModel("")
     setSelectedPrice(0)
@@ -371,10 +384,10 @@ export default function Home() {
 
   const showBackButton = activeView !== "home"
 
-  // Java Logic #5 Interactive Brand & Picker Loops Component Builder
+  // Refactored Picker Component populated from Java arrays
   const renderHardwareSelectionView = (category: "gadgets" | "appliances") => {
     const database = category === "gadgets" ? GADGETS_DATABASE : APPLIANCES_DATABASE
-    const availableBrands = Object.keys(database)
+    const availableCategoriesOrBrands = Object.keys(database)
 
     return (
       <section className="min-h-screen py-12 bg-[#293241]">
@@ -388,25 +401,24 @@ export default function Home() {
           </Button>
 
           <h2 className="text-3xl font-bold text-[#e0fbfc] text-center mb-2 capitalize">
-            {category} Interactive Installment Portal
+            {category === "gadgets" ? "Smartphones & Gadget Portal" : "Home Electronics & Appliances"}
           </h2>
           <p className="text-[#98c1d9] text-center mb-8 text-sm">
-            Configure live brand specifications, evaluate real-time microfinance computations and generate due dates.
+            Evaluate immediate microfinance computations, setup terms and project calendar timelines.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            {/* Left Box: Database Selectors */}
             <Card className="bg-[#3d5a80] border-[#98c1d9]/20 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-[#e0fbfc] text-lg flex items-center gap-2">
                   <Layers className="h-5 w-5 text-[#ee6c4d]" />
-                  Model Database Picker Loops
+                  {category === "gadgets" ? "Select Smartphone Brand" : "Select Appliance Category"}
                 </CardTitle>
-                <CardDescription className="text-[#98c1d9]">Select options to fetch computational prices</CardDescription>
+                <CardDescription className="text-[#98c1d9]">Pulls inventory entries directly from hardware logs</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-[#e0fbfc]">Select Trademark Brand</Label>
+                  <Label className="text-[#e0fbfc]">Available Classes</Label>
                   <Select
                     value={selectedBrand}
                     onValueChange={(brand) => {
@@ -416,10 +428,10 @@ export default function Home() {
                     }}
                   >
                     <SelectTrigger className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
-                      <SelectValue placeholder="Choose brand..." />
+                      <SelectValue placeholder={category === "gadgets" ? "Choose brand..." : "Choose appliance type..."} />
                     </SelectTrigger>
                     <SelectContent className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
-                      {availableBrands.map((b) => (
+                      {availableCategoriesOrBrands.map((b) => (
                         <SelectItem key={b} value={b} className="hover:bg-[#3d5a80] focus:bg-[#3d5a80] text-[#e0fbfc]">{b}</SelectItem>
                       ))}
                     </SelectContent>
@@ -428,7 +440,7 @@ export default function Home() {
 
                 {selectedBrand && (
                   <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <Label className="text-[#e0fbfc]">Select Specific Model Layout</Label>
+                    <Label className="text-[#e0fbfc]">Select Target Variant Configuration</Label>
                     <Select
                       value={selectedModel}
                       onValueChange={(modelName) => {
@@ -438,7 +450,7 @@ export default function Home() {
                       }}
                     >
                       <SelectTrigger className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
-                        <SelectValue placeholder="Choose model variant..." />
+                        <SelectValue placeholder="Choose specific design structure..." />
                       </SelectTrigger>
                       <SelectContent className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
                         {database[selectedBrand]?.map((m) => (
@@ -454,12 +466,12 @@ export default function Home() {
                 {selectedPrice > 0 && (
                   <div className="pt-4 border-t border-[#98c1d9]/20 space-y-4 animate-in fade-in duration-300">
                     <div className="bg-[#293241]/50 p-3 rounded border border-[#98c1d9]/10">
-                      <p className="text-xs text-[#98c1d9]">Retrieved Base Price:</p>
+                      <p className="text-xs text-[#98c1d9]">Database Catalog Base Price:</p>
                       <p className="text-2xl font-mono font-bold text-[#ee6c4d]">P{selectedPrice.toLocaleString()}.00</p>
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="text-[#e0fbfc] font-medium">Payment Frequency Mode</Label>
+                      <Label className="text-[#e0fbfc] font-medium">Payment Plan Cycle</Label>
                       <div className="grid grid-cols-3 gap-2">
                         {(["Weekly", "15 Days", "Monthly"] as const).map((freq) => (
                           <Button
@@ -477,7 +489,7 @@ export default function Home() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-[#e0fbfc]">Installment Duration Limit (Months)</Label>
+                      <Label className="text-[#e0fbfc]">Duration Period Limit (Months)</Label>
                       <Input
                         type="number"
                         min={1}
@@ -490,7 +502,7 @@ export default function Home() {
 
                     <div className="flex items-center justify-between bg-[#293241]/30 p-2 rounded border border-[#98c1d9]/5">
                       <span className="text-xs text-[#98c1d9] flex items-center gap-1">
-                        <Info className="h-3 w-3 text-cyan-400" /> Standard Delivery Surcharge (+P50)
+                        <Info className="h-3 w-3 text-cyan-400" /> Microfinance Logistics Charge (+P50)
                       </span>
                       <input
                         type="checkbox"
@@ -504,18 +516,17 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Right Box: Dynamic Computational Output Displays (Java Logic #1 Framework) */}
             <div>
               {selectedPrice > 0 ? (
                 <Card className="bg-[#3d5a80] border-[#ee6c4d]/40 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                   <div className="bg-gradient-to-r from-[#ee6c4d] to-[#ee6c4d]/80 px-4 py-3">
                     <h3 className="text-white font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
-                      <Calendar className="h-4 w-4" /> Live Account Matrix Projections
+                      <Calendar className="h-4 w-4" /> Amortization Matrix Terminal
                     </h3>
                   </div>
                   <CardContent className="p-4 space-y-4">
                     <div className="space-y-1">
-                      <span className="text-xs text-[#98c1d9]">Amortization Rate Plan:</span>
+                      <span className="text-xs text-[#98c1d9]">Rate Installment Plan:</span>
                       <p className="text-3xl font-mono font-black text-[#e0fbfc]">
                         P{processedInstallmentPlan.amortization.toFixed(2)} 
                         <span className="text-xs font-normal text-[#98c1d9] ml-1">/ installment term</span>
@@ -524,23 +535,23 @@ export default function Home() {
 
                     <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-[#98c1d9]/20">
                       <div>
-                        <span className="text-[#98c1d9]">Interest Base Fee (5%):</span>
-                        <p className="text-[#e0fbfc] font-mono font-semibold">P{(selectedPrice * 0.05).toFixed(2)}</p>
+                        <span className="text-[#98c1d9]">Interest Fee (5% per month):</span>
+                        <p className="text-[#e0fbfc] font-mono font-semibold">P{(selectedPrice * 0.05 * paymentMonths).toFixed(2)}</p>
                       </div>
                       <div>
-                        <span className="text-[#98c1d9]">Calculated Grand Total:</span>
+                        <span className="text-[#98c1d9]">Calculated Ledger Total:</span>
                         <p className="text-[#ee6c4d] font-mono font-bold">P{processedInstallmentPlan.grandTotal.toFixed(2)}</p>
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <span className="text-xs text-[#e0fbfc] font-bold uppercase tracking-wider flex items-center gap-1">
-                        🗓️ Generated Calendar Due Dates Loop:
+                        🗓️ Generated Calendar Invoices Loop:
                       </span>
                       <div className="bg-[#293241] rounded border border-[#98c1d9]/10 max-h-40 overflow-y-auto divide-y divide-[#98c1d9]/10">
                         {processedInstallmentPlan.dateSchedules.map((date, index) => (
                           <div key={index} className="p-2 flex items-center justify-between text-xs font-mono">
-                            <span className="text-[#98c1d9]">Term Invoice #{index + 1}:</span>
+                            <span className="text-[#98c1d9]">Due Cycle Invoice #{index + 1}:</span>
                             <span className="text-[#e0fbfc] font-medium">{date}</span>
                           </div>
                         ))}
@@ -552,14 +563,14 @@ export default function Home() {
                       onClick={handleProcessInstallmentCheckout}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
-                      Apply & Push First Term to Ledger
+                      Add to Account Ledger Timeline
                     </Button>
                   </CardContent>
                 </Card>
               ) : (
                 <Card className="bg-[#3d5a80]/30 border-dashed border-[#98c1d9]/30">
                   <CardContent className="py-12 text-center text-[#98c1d9] text-sm">
-                    Select a dynamic hardware brand and model configuration loop to populate automated installment plans.
+                    Select a dynamic trademark loop profile above to review active payment matrices.
                   </CardContent>
                 </Card>
               )}
@@ -570,7 +581,6 @@ export default function Home() {
     )
   }
 
-  // Route Views Allocator Layout Engine
   const renderContent = () => {
     switch (activeView) {
       case "e-loan":
@@ -677,7 +687,6 @@ export default function Home() {
         onCheckout={handleCheckout}
       />
 
-      {/* Main Footer Wrapper Section */}
       <footer className="bg-[#293241] border-t border-[#3d5a80] py-8">
         <div className="container mx-auto px-4 text-center">
           <p className="text-[#98c1d9] mb-2 font-semibold">
