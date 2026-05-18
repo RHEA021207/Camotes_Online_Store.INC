@@ -742,7 +742,7 @@ export default function Home() {
     }
   }
 
- return (
+return (
     <main className="min-h-screen bg-[#293241]">
       <Header 
         onNavigate={handleNavigate} 
@@ -751,69 +751,67 @@ export default function Home() {
         currentSection={activeView}
       />
       
-      {/* Dynamic View Engine Routing */}
       {activeView === "home" ? (
         <>
           {/* 1. Full-screen 100vh Hero Section */}
           <section className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden bg-white">
             {/* Background Graphic Asset with Darker Overlay */}
             <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 hover:scale-105"
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700"
               style={{ backgroundImage: `url('/for the background.jpg')` }} 
             />
-            {/* Subtle dark aesthetic overlay mask for high text readability */}
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+            {/* Dark aesthetic overlay mask to make text the clear "main character" */}
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
 
             {/* Essential Metadata Badges Container */}
-            <div className="absolute top-24 z-10 flex flex-wrap justify-center gap-2 px-4 max-w-2xl text-center">
-              <span className="bg-[#ee6c4d] text-white font-bold text-xs px-3 py-1 rounded-full shadow-md animate-bounce">
+            <div className="absolute top-24 z-10 flex flex-col items-center gap-2 px-4 max-w-2xl text-center">
+              <span className="bg-[#ee6c4d] text-white font-bold text-xs sm:text-sm px-4 py-1.5 rounded-full shadow-lg animate-bounce">
                 Dali ra! Valid ID ra ang kailangan. Kuha na sa imong kinahanglanon!
               </span>
-              <div className="flex gap-1.5 justify-center mt-1">
-                <span className="bg-white/90 text-[#293241] font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border border-white/20">DTI Registered</span>
-                <span className="bg-white/90 text-[#293241] font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border border-white/20">Business Permit</span>
-                <span className="bg-white/90 text-[#293241] font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border border-white/20">Always Open</span>
+              <div className="flex gap-2 justify-center mt-1">
+                <span className="bg-white/20 text-white backdrop-blur-sm font-bold text-[10px] sm:text-xs uppercase tracking-wider px-2.5 py-1 rounded border border-white/20">DTI Registered</span>
+                <span className="bg-white/20 text-white backdrop-blur-sm font-bold text-[10px] sm:text-xs uppercase tracking-wider px-2.5 py-1 rounded border border-white/20">Business Permit</span>
+                <span className="bg-white/20 text-white backdrop-blur-sm font-bold text-[10px] sm:text-xs uppercase tracking-wider px-2.5 py-1 rounded border border-white/20">Always Open</span>
               </div>
             </div>
 
             {/* Centered Main Character Headline Typography */}
             <div className="relative z-10 text-center px-4 max-w-3xl select-none">
-              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-tight drop-shadow-xl animate-in fade-in zoom-in-95 duration-500">
+              <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-white tracking-tight drop-shadow-2xl">
                 Hello! How can I help you?
               </h1>
-              <p className="text-[#e0fbfc]/90 font-medium text-sm sm:text-base mt-4 max-w-md mx-auto drop-shadow">
+              <p className="text-[#e0fbfc]/90 font-medium text-base sm:text-lg mt-6 max-w-md mx-auto drop-shadow-md">
                 Camotes Premium Microfinance Terminal — Select an item ledger or service pipeline below to begin.
               </p>
             </div>
 
             {/* Scroll Indicator Prompt */}
             <div 
-              className="absolute bottom-8 z-10 flex flex-col items-center gap-1 cursor-pointer group animate-ping-subtle"
+              className="absolute bottom-10 z-10 flex flex-col items-center gap-2 cursor-pointer group"
               onClick={handleBrowseServices}
             >
-              <span className="text-xs text-white/70 font-semibold tracking-widest uppercase group-hover:text-white transition-colors">
-                Explore Services
+              <span className="text-xs text-white/80 font-bold tracking-widest uppercase group-hover:text-white transition-colors">
+                Browse Services
               </span>
               <ArrowDown className="h-5 w-5 text-[#ee6c4d] animate-bounce" />
             </div>
           </section>
 
-          {/* 2. Services Grid Layout (Pushed down into secondary screen viewport scroll tier) */}
-          <div ref={servicesRef} className="bg-[#293241] py-16 border-t border-[#3d5a80]">
+          {/* 2. Services Grid Layout (Pushed completely out of initial viewport frame) */}
+          <div ref={servicesRef} className="bg-[#293241] py-20 border-t border-[#3d5a80]">
             <ServicesGrid onSelectService={handleNavigate} />
           </div>
         </>
       ) : (
-        /* Render Dedicated Category Context Views instead of inline anchor scrolls */
+        /* Render Dedicated Category Sub-views instead of inline anchor scrolls */
         <div className="pt-16 min-h-[calc(100vh-80px)] bg-[#293241]">
           {renderContent()}
         </div>
       )}
 
-      {/* Cart Processing Sliding Drawer Interface overlay component */}
       <CartSidebar
         isOpen={cartOpen}
-        onClose={() => !cartOpen}
+        onClose={() => setCartOpen(false)}
         items={cart}
         onUpdateQuantity={handleUpdateCartQuantity}
         onRemoveItem={handleRemoveFromCart}
@@ -842,12 +840,12 @@ export default function Home() {
             </a>
           </div>
 
-          <div className="pt-2">
+          <div className="mt-4">
             <a
               href="https://www.facebook.com/share/1BcP1N5D2S/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-[11px] bg-[#ee6c4d]/10 px-4 py-1.5 rounded border border-[#ee6c4d]/30 text-[#ee6c4d] font-bold hover:bg-[#ee6c4d] hover:text-white transition-all tracking-wider uppercase"
+              className="inline-block text-xs bg-[#3d5a80]/40 px-3 py-1.5 rounded border border-[#98c1d9]/20 text-[#ee6c4d] font-bold hover:bg-[#3d5a80]/80 transition-colors"
             >
               Follow Official Facebook Page
             </a>
