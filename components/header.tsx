@@ -74,19 +74,24 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
                 <span className="hidden xs:inline">Back</span>
               </Button>
             ) : (
-              <Link href="/" className="flex items-center gap-1.5 sm:gap-2 select-none" onClick={() => onNavigate("home")}>
-                <Image
-                  src="/images/main-logo.jpg"
-                  alt="Camotes Online Store"
-                  width={34}
-                  height={34}
-                  className="rounded-full border border-[#98c1d9]/30 object-cover"
-                />
-                <div className="hidden xs:block">
-                  <p className="text-xs font-black text-[#e0fbfc] tracking-wide whitespace-nowrap">Camotes Online Store</p>
-                  <p className="text-[10px] text-[#98c1d9]/80 font-medium">Microfinance Inc.</p>
-                </div>
-              </Link>
+            <Link href="/" className="flex items-center gap-3 select-none" onClick={() => onNavigate("home")}>
+  <Image
+    src="/images/main-logo.jpg"
+    alt="Camotes Online Store"
+    width={34}
+    height={34}
+    className="rounded-full border border-[#98c1d9]/30 object-cover flex-shrink-0"
+  />
+  {/* Restored text classes to make sure it shows cleanly on desktop sizes */}
+  <div className="hidden md:block lg:block xl:block">
+    <p className="text-xs sm:text-sm font-black text-[#e0fbfc] tracking-wide whitespace-nowrap">
+      Camotes Online Store
+    </p>
+    <p className="text-[10px] sm:text-xs text-[#98c1d9]/80 font-medium whitespace-nowrap">
+      Microfinance Inc.
+    </p>
+  </div>
+</Link>
             )}
           </div>
 
