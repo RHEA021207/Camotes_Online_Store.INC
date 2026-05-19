@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Camotes Online Store",
   description: "Microfinance Inc. Ledger System",
   icons: {
-    icon: "/icon.png?v=1", // The ?v=1 completely destroys old browser memory cache!
+    icon: "/icon-light-32x32.png?v=1", // The ?v=1 completely destroys old browser memory cache!
   },
 };
 
