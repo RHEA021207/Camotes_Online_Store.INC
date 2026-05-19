@@ -75,12 +75,12 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
           ) : (
             <Link href="/" className="flex items-center gap-2 select-none" onClick={() => onNavigate("home")}>
               <Image
-                src="/icon-light-32x32.png"
-                alt="Camotes Online Store"
-                width={36}
-                height={36}
-                className="rounded-full border border-[#98c1d9]/30"
-              />
+  src="/images/main-logo.jpg"
+  alt="Camotes Online Store"
+  width={36}
+  height={36}
+  className="rounded-full border border-[#98c1d9]/30 object-cover"
+/>
               <div>
                 <p className="text-xs sm:text-sm font-black text-[#e0fbfc] tracking-wide whitespace-nowrap">Camotes Online Store</p>
                 <p className="text-[10px] sm:text-xs text-[#98c1d9]/80 font-medium">Microfinance Inc.</p>
