@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, ShoppingCart, Calendar, Info, Layers, ArrowDown, Search } from "lucide-react"
-import AccountModal from "@/components/ui/account-modal";
+import AccountModal from "@/components/account-modal"
 
 // Java-Sourced Dataset Definitions (Updated with requested models & Speakers)
 const GADGETS_DATABASE: Record<string, { model: string; price: number }[]> = {
@@ -723,7 +723,7 @@ export default function Home() {
     }
   }
 
-  return (
+ return (
     <main className="min-h-screen bg-[#293241]">
       <Header 
         onNavigate={handleNavigate} 
@@ -743,31 +743,6 @@ export default function Home() {
             />
             {/* Balanced Dark Aesthetic Overlay Mask for Strong Contrast */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-[#293241]" />
-
-            {/* Essential Badges Container */}
-            <div className="absolute top-24 z-10 flex flex-col items-center gap-3 px-4 w-full max-w-3xl text-center select-none">
-              
-              {/* Prominent "Dali ra!" Core Badge */}
-              <div className="relative group animate-in fade-in slide-in-from-top-4 duration-700">
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#ee6c4d] to-amber-500 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
-                <span className="relative block bg-gradient-to-r from-[#ee6c4d] to-[#d65a31] text-white font-black text-xs sm:text-sm md:text-base px-6 py-2 rounded-full shadow-2xl border border-white/20 tracking-wide">
-                  ✨ Dali ra! Valid ID ra ang kailangan. Kuha na sa imong kinahanglanon!
-                </span>
-              </div>
-
-              {/* Minor Operational Badges */}
-              <div className="flex flex-wrap gap-2 justify-center mt-1 animate-in fade-in duration-1000 delay-300">
-                <span className="bg-white/10 text-[#e0fbfc] backdrop-blur-md font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1 rounded-md border border-white/10 shadow-sm">
-                  DTI Registered
-                </span>
-                <span className="bg-white/10 text-[#e0fbfc] backdrop-blur-md font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1 rounded-md border border-white/10 shadow-sm">
-                  Business Permit
-                </span>
-                <span className="bg-white/10 text-[#e0fbfc] backdrop-blur-md font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1 rounded-md border border-white/10 shadow-sm">
-                  Always Open
-                </span>
-              </div>
-            </div>
 
             {/* Centered Main Character Headline Typography */}
             <div className="relative z-10 text-center px-4 max-w-4xl select-none mt-12">
@@ -804,7 +779,7 @@ export default function Home() {
               onClick={handleBrowseServices}
             >
               <span className="text-xs text-white/60 font-bold tracking-widest uppercase group-hover:text-white transition-colors duration-300">
-                Explore Terminal
+                Browse Services
               </span>
               <div className="p-2 rounded-full bg-white/5 border border-white/10 group-hover:border-[#ee6c4d]/50 group-hover:bg-white/10 transition-all duration-300">
                 <ArrowDown className="h-5 w-5 text-[#ee6c4d] animate-bounce" />
@@ -812,7 +787,7 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 2. Services Grid Layout (Pushed down entirely out of initial viewport frame) */}
+          {/* 2. Services Grid Layout */}
           <div ref={servicesRef} className="bg-[#293241] py-24 border-t border-[#3d5a80]/60">
             <div className="container mx-auto px-4">
               <ServicesGrid onSelectService={handleNavigate} />
@@ -820,11 +795,10 @@ export default function Home() {
           </div>
         </>
       ) : (
-        /* 3. Dedicated Isolated Sub-views (Replaces inline page scrolling) */
+        /* 3. Dedicated Isolated Sub-views */
         <div className="pt-20 min-h-[calc(100vh-80px)] bg-[#293241] animate-in fade-in duration-300">
           <div className="container mx-auto px-4 pb-16">
             
-            {/* Prominent Back to Home Button on Dedicated View layouts */}
             <div className="mb-6">
               <button
                 onClick={() => handleNavigate("home")}
@@ -860,8 +834,7 @@ export default function Home() {
             DTI Corporate Registry No. 491023-A | Local Regulatory Operational Compliance Protocol | Since 2022
           </p>
           
-          {/* Footer Address Node linked directly to your requested URL */}
-         <div className="pt-2">
+          <div className="pt-2">
             <a
               href="https://www.facebook.com/share/1BcP1N5D2S/"
               target="_blank"

@@ -156,14 +156,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
           <nav className="hidden md:flex items-center gap-1 lg:gap-2">
             {!showBackButton && (
               <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#3d5a80] font-bold text-xs"
-                  onClick={() => onNavigate("services")}
-                >
-                  Services
-                </Button>
+                
                 <Button
                   variant="ghost"
                   size="sm"
@@ -285,15 +278,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
               </button>
             ) : (
               <>
-                <button
-                  className="px-5 py-3 text-left text-sm font-semibold text-[#e0fbfc] hover:bg-[#3d5a80] transition-colors border-b border-[#3d5a80]/20"
-                  onClick={() => {
-                    onNavigate("services")
-                    setMobileMenuOpen(false)
-                  }}
-                >
-                  Services
-                </button>
+                
                 <button
                   className="px-5 py-3 text-left text-sm font-semibold text-[#e0fbfc] hover:bg-[#3d5a80] transition-colors border-b border-[#3d5a80]/20"
                   onClick={() => {
