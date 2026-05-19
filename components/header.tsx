@@ -58,8 +58,8 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#3d5a80] bg-[#293241]/95 backdrop-blur supports-[backdrop-filter]:bg-[#293241]/80">
-      {/* Container: Converted to flex-wrap with dynamic gap properties to handle micro-screen shifts */}
-      <div className="container mx-auto flex flex-wrap min-h-16 items-center justify-between gap-x-4 gap-y-2 px-4 py-2 md:py-0">
+      {/* Container: Handles layout links natively across the bar */}
+      <div className="container mx-auto flex min-h-16 items-center justify-between gap-x-4 px-4 py-2 md:py-0">
         
         {/* Back Button or Logo Wrapper */}
         <div className="flex items-center flex-shrink-0">
@@ -89,7 +89,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
           )}
         </div>
 
-        {/* Search Bar - Centers on Desktop, dynamically adjusts spacing context */}
+        {/* Search Bar - Centers on Desktop */}
         <div className="relative hidden flex-1 max-w-xs lg:max-w-md mx-2 md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98c1d9]" />
           <Input
@@ -151,9 +151,9 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
           )}
         </div>
 
-        {/* Right Navigation Actions block - Enhanced with desktop right padding cushion */}
-        <div className="flex items-center gap-2 ml-auto md:ml-0 md:pr-44 transition-all duration-300">
-          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+        {/* Right Navigation Actions block - Perfectly clean layout */}
+        <div className="flex items-center gap-4 ml-auto md:ml-0">
+          <nav className="hidden md:flex items-center gap-2">
             {!showBackButton && (
               <>
                 <Button
@@ -176,7 +176,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
             )}
           </nav>
           
-          <div className="flex items-center gap-1.5 border-l border-[#3d5a80] pl-2 lg:pl-4">
+          <div className="flex items-center gap-2 border-l border-[#3d5a80] pl-4">
             <Button
               variant="ghost"
               size="icon"
@@ -310,18 +310,16 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
         </div>
       )}
 
-      {/* Floating FB Action button - Hidden on active mobile drawer layout */}
-      {!mobileMenuOpen && (
-        <a
-          href="https://www.facebook.com/share/1BcP1N5D2S/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1877f2] text-white px-4 py-3 rounded-full shadow-lg hover:bg-[#166fe5] transition-transform duration-200 hover:scale-105"
-        >
-          <MessageCircle className="h-5 w-5" />
-          <span className="hidden sm:inline text-xs font-bold tracking-wide">Message us on FB</span>
-        </a>
-      )}
+      {/* Floating FB Action button - Relocated to the bottom right viewport */}
+      <a
+        href="https://www.facebook.com/share/1BcP1N5D2S/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1877f2] text-white px-4 py-3 rounded-full shadow-xl hover:bg-[#166fe5] transition-all duration-200 hover:scale-105"
+      >
+        <MessageCircle className="h-5 w-5" />
+        <span className="hidden sm:inline text-xs font-bold tracking-wide">Message us on FB</span>
+      </a>
     </header>
   )
 }
