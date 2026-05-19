@@ -861,39 +861,27 @@ export default function Home() {
           </p>
           
           {/* Footer Address Node linked directly to your requested URL */}
-          <div className="pt-2">
-            <a
-              href="https://maps.app.goo.gl/282URg4zgBT9yvAR7"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#293241]/80 px-5 py-2.5 rounded-full border border-[#98c1d9]/10 text-[#98c1d9] hover:text-white hover:border-[#ee6c4d]/50 transition-all shadow-md group"
-            >
-              <MapPin className="h-4 w-4 text-[#ee6c4d] group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold tracking-wide">Adela, Poro, Camotes, Cebu</span>
-            </a>
-          </div>
-
-          <div className="pt-2">
+         <div className="pt-2">
             <a
               href="https://www.facebook.com/share/1BcP1N5D2S/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block text-[11px] bg-[#ee6c4d]/10 px-4 py-2 rounded border border-[#ee6c4d]/20 text-[#ee6c4d] font-bold hover:bg-[#ee6c4d] hover:text-white transition-all tracking-wider uppercase"
             >
-             Follow Official Facebook Page
-      </a>
-    </div>
- </div>
-    </footer>
+              Follow Official Facebook Page
+            </a>
+          </div>
+        </div>
+      </footer>
 
-    {/* Account Verification Gateway Overlay */}
-    <AccountModal 
-      isOpen={authModalOpen}
-      onClose={() => setAuthModalOpen(false)}
-      onLoginSuccess={(mobile: string, name: string) => {
-        console.log("Customer Verified Ledger Context Loaded:", mobile, name)
-      }}
-    />
-  </main>
- )
+      {/* Account Verification Gateway Overlay */}
+      <AccountModal 
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onLoginSuccess={(mobile: string, name: string) => {
+          console.log("Customer Verified Ledger Context Loaded:", mobile, name)
+        }}
+      />
+    </main>
+  )
 }
