@@ -10,19 +10,20 @@ interface HeroSectionProps {
 export function HeroSection({ onBrowseServices }: HeroSectionProps) {
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden bg-[#293241]">
-      {/* Background Image Wrapper */}
-      <div className="absolute inset-0">
+     {/* Background Image Wrapper */}
+      <div className="absolute inset-0 z-0">
         <Image
           src="/images/hero-background.jpg"
           alt="Camotes Online Store Background"
           fill
-          className="object-cover object-center"
+          className="object-cover object-center pointer-events-none"
           priority
         />
-        {/* Dark Overlay Mask: Blends the white background to look dark and readable */}
-        <div className="absolute inset-0 bg-[#293241]/85 backdrop-blur-[1px]" />
+        {/* Dark Overlay Mask: Force opacity so the white background doesn't blind the user */}
+        <div className="absolute inset-0 bg-[#293241]/90 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#293241]/40 via-[#293241]/80 to-[#293241]" />
       </div>
-
+      
       {/* Centered Content */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center px-4">
         {/* Logo */}
