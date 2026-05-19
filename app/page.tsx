@@ -840,7 +840,7 @@ export default function Home() {
           {/* Interactive Dynamic Location Node */}
           <div className="pt-1 flex items-center justify-center">
             <a
-              href="https://maps.google.com" 
+              href="https://maps.app.goo.gl/Uszepx1VXhfvWNkh7" 
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs text-[#98c1d9]/70 hover:text-[#ee6c4d] transition-colors duration-200 group"
