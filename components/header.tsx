@@ -75,12 +75,12 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
           ) : (
             <Link href="/" className="flex items-center gap-2 select-none" onClick={() => onNavigate("home")}>
               <Image
-  src="/images/main-logo.jpg"
-  alt="Camotes Online Store"
-  width={36}
-  height={36}
-  className="rounded-full border border-[#98c1d9]/30 object-cover"
-/>
+                src="/images/main-logo.jpg"
+                alt="Camotes Online Store"
+                width={36}
+                height={36}
+                className="rounded-full border border-[#98c1d9]/30 object-cover"
+              />
               <div>
                 <p className="text-xs sm:text-sm font-black text-[#e0fbfc] tracking-wide whitespace-nowrap">Camotes Online Store</p>
                 <p className="text-[10px] sm:text-xs text-[#98c1d9]/80 font-medium">Microfinance Inc.</p>
@@ -90,7 +90,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
         </div>
 
         {/* Search Bar - Centers on Desktop, dynamically adjusts spacing context */}
-       <div className="relative hidden flex-1 max-w-xs lg:max-w-md mx-2 md:block">
+        <div className="relative hidden flex-1 max-w-xs lg:max-w-md mx-2 md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98c1d9]" />
           <Input
             type="search"
@@ -151,12 +151,11 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
           )}
         </div>
 
-        {/* Right Navigation Actions block */}
-        <div className="flex items-center gap-2 ml-auto md:ml-0">
+        {/* Right Navigation Actions block - Enhanced with desktop right padding cushion */}
+        <div className="flex items-center gap-2 ml-auto md:ml-0 md:pr-44 transition-all duration-300">
           <nav className="hidden md:flex items-center gap-1 lg:gap-2">
             {!showBackButton && (
               <>
-                
                 <Button
                   variant="ghost"
                   size="sm"
@@ -278,7 +277,6 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
               </button>
             ) : (
               <>
-                
                 <button
                   className="px-5 py-3 text-left text-sm font-semibold text-[#e0fbfc] hover:bg-[#3d5a80] transition-colors border-b border-[#3d5a80]/20"
                   onClick={() => {
@@ -312,16 +310,18 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
         </div>
       )}
 
-      {/* Floating FB Action button */}
-      <a
-        href="https://www.facebook.com/share/1BcP1N5D2S/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1877f2] text-white px-4 py-3 rounded-full shadow-lg hover:bg-[#166fe5] transition-transform duration-200 hover:scale-105"
-      >
-        <MessageCircle className="h-5 w-5" />
-        <span className="hidden sm:inline text-xs font-bold tracking-wide">Message us on FB</span>
-      </a>
+      {/* Floating FB Action button - Hidden on active mobile drawer layout */}
+      {!mobileMenuOpen && (
+        <a
+          href="https://www.facebook.com/share/1BcP1N5D2S/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1877f2] text-white px-4 py-3 rounded-full shadow-lg hover:bg-[#166fe5] transition-transform duration-200 hover:scale-105"
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span className="hidden sm:inline text-xs font-bold tracking-wide">Message us on FB</span>
+        </a>
+      )}
     </header>
   )
 }
