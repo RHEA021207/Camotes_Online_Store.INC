@@ -40,7 +40,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
   const addToRecentSearches = (term: string) => {
     const updated = [term, ...recentSearches.filter(s => s !== term)].slice(0, 5)
     setRecentSearches(updated)
-    session sessionStorage.setItem("cos-recent-searches", JSON.stringify(updated))
+    sessionStorage.setItem("cos-recent-searches", JSON.stringify(updated))
   }
 
   const handleSearch = (term: string) => {
@@ -90,7 +90,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
         </div>
 
         {/* Search Bar - Centers on Desktop, dynamically adjusts spacing context */}
-        <div className="relative hidden flex-1 max-w-xs lg:max-w-md mx-2 md:block">
+       <div className="relative hidden flex-1 max-w-xs lg:max-w-md mx-2 md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98c1d9]" />
           <Input
             type="search"

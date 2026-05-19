@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapPin, ShoppingCart, Calendar, Info, Layers, ArrowDown, Search } from "lucide-react"
-import AccountModal from "@/components/account-modal"
+import AccountModal from "@/components/ui/account-modal";
 
 // Java-Sourced Dataset Definitions (Updated with requested models & Speakers)
 const GADGETS_DATABASE: Record<string, { model: string; price: number }[]> = {
