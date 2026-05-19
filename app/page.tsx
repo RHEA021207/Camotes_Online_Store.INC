@@ -825,23 +825,41 @@ export default function Home() {
       />
 
       {/* Compliance Footer Unit */}
-      <footer className="bg-[#1e2530] border-t border-[#3d5a80]/40 py-12">
-        <div className="container mx-auto px-4 text-center space-y-5">
-          <p className="text-[#98c1d9] font-bold text-base tracking-wide">
-            Camotes Online Store & Microfinance Inc.
-          </p>
-          <p className="text-xs text-[#98c1d9]/50 max-w-md mx-auto leading-relaxed">
-            DTI Corporate Registry No. 491023-A | Local Regulatory Operational Compliance Protocol | Since 2022
+      <footer className="bg-[#293241] py-12">
+        <div className="container mx-auto px-4 text-center space-y-2">
+          {/* Main Headline Label */}
+          <p className="text-[#e0fbfc] font-medium text-base tracking-wide">
+            Camotes Online Store - Microfinance Inc.
           </p>
           
-          <div className="pt-2">
+          {/* Secondary Verification Subtitle */}
+          <p className="text-xs text-[#98c1d9]/70 font-normal">
+            DTI Registered | Business Permit | Since 2022
+          </p>
+          
+          {/* Interactive Dynamic Location Node */}
+          <div className="pt-1 flex items-center justify-center">
+            <a
+              href="https://maps.google.com" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-[#98c1d9]/70 hover:text-[#ee6c4d] transition-colors duration-200 group"
+            >
+              {/* MapPin / Navigation Marker Icon Component */}
+              <MapPin className="h-3.5 w-3.5 text-[#98c1d9]/70 group-hover:text-[#ee6c4d] transition-colors" />
+              <span>Adela, Poro, Camotes, Cebu</span>
+            </a>
+          </div>
+          
+          {/* Direct Social Link Anchor */}
+          <div className="pt-4">
             <a
               href="https://www.facebook.com/share/1BcP1N5D2S/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-[11px] bg-[#ee6c4d]/10 px-4 py-2 rounded border border-[#ee6c4d]/20 text-[#ee6c4d] font-bold hover:bg-[#ee6c4d] hover:text-white transition-all tracking-wider uppercase"
+              className="text-xs text-[#ee6c4d] font-semibold hover:underline tracking-wide transition-all"
             >
-              Follow Official Facebook Page
+              Follow us on Facebook
             </a>
           </div>
         </div>
