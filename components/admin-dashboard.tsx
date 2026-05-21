@@ -419,30 +419,49 @@ export function AdminDashboard({
               </div>
 
               {/* Customer List */}
-              <div className="max-h-64 overflow-y-auto space-y-2">
-                {filteredCustomers.map((customer) => (
-                  <div
-                    key={customer.id}
-                    className="flex items-center justify-between p-3 bg-[#293241] rounded-lg"
-                  >
-                    <div>
-                      <p className="text-[#e0fbfc] font-medium">{customer.name}</p>
-                      <p className="text-xs text-[#98c1d9]">{customer.id}</p>
-                      {customer.balance > 0 && (
-                        <p className="text-xs text-red-400">Balance: P{customer.balance.toFixed(2)}</p>
-                      )}
-                      {customer.trustScore === "not_good" && (
-                        <p className="text-[11px] font-bold text-red-500 uppercase mt-0.5">🚫 Cannot apply for services</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold px-2 py-1 rounded bg-[#3d5a80] text-[#e0fbfc] uppercase">
-                        {customer.trustScore.replace('_', ' ')}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+<div className="max-h-64 overflow-y-auto space-y-2">
+  {filteredCustomers.map((customer) => (
+    <div
+      key={customer.id}
+      className="flex items-center justify-between p-3 bg-[#293241] rounded-lg"
+    >
+      <div>
+        <p className="text-[#e0fbfc] font-medium">{customer.name}</p>
+        <p className="text-xs text-[#98c1d9]">{customer.id}</p>
+        {customer.balance > 0 && (
+          <p className="text-xs text-red-400">Balance: P{customer.balance.toFixed(2)}</p>
+        )}
+        {customer.trustScore === "not_good" && (
+          <p className="text-[11px] font-bold text-red-500 uppercase mt-0.5">🚫 Cannot apply for services</p>
+        )}
+      </div>
+      
+      {/* Right Side Badge: Displaying the Trust Score with dynamic colors */}
+      <div className="flex items-center gap-2">
+        {customer.trustScore === "excellent" && (
+          <span className="text-xs font-bold px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 uppercase tracking-wider">
+            Excellent
+          </span>
+        )}
+        {customer.trustScore === "good" && (
+          <span className="text-xs font-bold px-3 py-1 rounded bg-sky-500/10 border border-sky-500/30 text-sky-400 uppercase tracking-wider">
+            Good
+          </span>
+        )}
+        {customer.trustScore === "new" && (
+          <span className="text-xs font-bold px-3 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 uppercase tracking-wider">
+            New
+          </span>
+        )}
+        {customer.trustScore === "not_good" && (
+          <span className="text-xs font-bold px-3 py-1 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 uppercase tracking-wider">
+            Not Good
+          </span>
+        )}
+      </div>
+    </div>
+  ))}
+</div>
             </CardContent>
           </Card>
 
