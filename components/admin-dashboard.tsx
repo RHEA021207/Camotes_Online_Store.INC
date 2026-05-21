@@ -97,10 +97,10 @@ export function AdminDashboard({
   const [editingStockId, setEditingStockId] = useState<string | null>(null)
   const [editingStockData, setEditingStockData] = useState<Partial<StockItem>>({})
 
- // [ADDITION 2] State to track which metric stat box is clicked/filtered
+  // Track which metric stat box is clicked/filtered
   const [activeStatFilter, setActiveStatFilter] = useState<"all" | "customers" | "sales" | "low_stock" | "transactions">("all")
 
-  // [ADDITION 5] State for custom date receipt selection filters
+  // State for custom date receipt selection filters
   const [salesTimeframe, setSalesTimeframe] = useState<string>("day")
   const [customValue, setCustomValue] = useState<number>(1)
   const [receiptHeading, setReceiptHeading] = useState<string>("Daily Sales Receipt")
@@ -113,43 +113,35 @@ export function AdminDashboard({
       c.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
- // [ADDITION 5] Date receipt calculation filtering logic
- const getFilteredSales = () => {
-  const now = new Date();
-  
-  return todaySales.filter((sale) => {
-    const saleDate = new Date(sale.timestamp);
-    if (isNaN(saleDate.getTime())) return true;
-
-    // --- Hardcoded standard filters ---
-    if (salesTimeframe === "month") {
-      return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
-    } else if (salesTimeframe === "year") {
-      return saleDate.getFullYear() === now.getFullYear();
-    } 
+  // Date receipt calculation filtering logic
+  const getFilteredSales = () => {
+    const now = new Date();
     
-   // --- Dynamic "Others" custom input filters ---
-// Change "others_days" to "custom_days" to match your dropdown properties!
-else if (salesTimeframe === "custom_days" || salesTimeframe === "others_days") {
-  const daysAgo = new Date();
-  daysAgo.setDate(now.getDate() - customValue);
-  daysAgo.setHours(0, 0, 0, 0); 
-  return saleDate >= daysAgo;
-} 
-// Change to "custom_months"
-else if (salesTimeframe === "custom_months" || salesTimeframe === "others_months") {
-  const monthsAgo = new Date();
-  monthsAgo.setMonth(now.getMonth() - customValue);
-  return saleDate >= monthsAgo;
-} 
-// Change to "custom_years"
-else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years") {
-  const yearsAgo = new Date();
-  yearsAgo.setFullYear(now.getFullYear() - customValue);
-  return saleDate >= yearsAgo;
-}
-  });
-};
+    return todaySales.filter((sale) => {
+      const saleDate = new Date(sale.timestamp);
+      if (isNaN(saleDate.getTime())) return true;
+
+      if (salesTimeframe === "month") {
+        return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
+      } else if (salesTimeframe === "year") {
+        return saleDate.getFullYear() === now.getFullYear();
+      } else if (salesTimeframe === "custom_days" || salesTimeframe === "others_days") {
+        const daysAgo = new Date();
+        daysAgo.setDate(now.getDate() - customValue);
+        daysAgo.setHours(0, 0, 0, 0); 
+        return saleDate >= daysAgo;
+      } else if (salesTimeframe === "custom_months" || salesTimeframe === "others_months") {
+        const monthsAgo = new Date();
+        monthsAgo.setMonth(now.getMonth() - customValue);
+        return saleDate >= monthsAgo;
+      } else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years") {
+        const yearsAgo = new Date();
+        yearsAgo.setFullYear(now.getFullYear() - customValue);
+        return saleDate >= yearsAgo;
+      }
+      return true;
+    });
+  };
 
   const activeSalesItems = getFilteredSales()
   const totalSalesToday = activeSalesItems.reduce((sum, sale) => sum + sale.amount, 0)
@@ -256,7 +248,7 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
           </CardContent>
         </Card>
 
-        {/* Stats Overview - [ADDITION 2] Interactive click filtering applied */}
+        {/* Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card 
             onClick={() => setActiveStatFilter(activeStatFilter === "customers" ? "all" : "customers")}
@@ -402,7 +394,6 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
                         <SelectItem value="new" className="text-[#e0fbfc]">New</SelectItem>
                         <SelectItem value="good" className="text-[#e0fbfc]">Good Payer</SelectItem>
                         <SelectItem value="excellent" className="text-[#e0fbfc]">Excellent</SelectItem>
-                        {/* [ADDITION 4] New Choice */}
                         <SelectItem value="not_good" className="text-red-400">Not Good</SelectItem>
                       </SelectContent>
                     </Select>
@@ -428,73 +419,34 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
               </div>
 
               {/* Customer List */}
-<div className="max-h-64 overflow-y-auto space-y-2">
-  {filteredCustomers.map((customer) => (
-    <div
-      key={customer.id}
-      className="flex items-center justify-between p-3 bg-[#293241] rounded-lg"
-    >
-      <div>
-        <p className="text-[#e0fbfc] font-medium">{customer.name}</p>
-        <p className="text-xs text-[#98c1d9]">{customer.id}</p>
-        {customer.balance > 0 && (
-          <p className="text-xs text-red-400">Balance: P{customer.balance.toFixed(2)}</p>
-        )}
-        {customer.trustScore === "not_good" && (
-          <p className="text-[11px] font-bold text-red-500 uppercase mt-0.5">🚫 Cannot apply for services</p>
-        )}
-      </div>
-      
-      {/* CLEAN ACTION SLOT: Replaced the accidentally pasted timeframe selectors */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold px-2 py-1 rounded bg-[#3d5a80] text-[#e0fbfc] uppercase">
-          {customer.trustScore.replace('_', ' ')}
-        </span>
-      </div>
-    </div>
-  ))}
-</div>
-
-  {/* Checks for both 'custom_' or 'others_' prefix prefixes so it won't crash */}
-  {(salesTimeframe.startsWith("custom_") || salesTimeframe.startsWith("others_")) && (
-    <div className="flex items-center gap-2 animate-in fade-in duration-200">
-      <Input
-        type="number"
-        min={1}
-        value={customValue}
-        onChange={(e) => setCustomValue(Math.max(1, parseInt(e.target.value) || 1))}
-        className="w-16 h-8 text-center bg-[#293241] border-[#98c1d9]/30 text-white font-bold text-xs focus:ring-1 focus:ring-orange-500"
-      />
-      <span className="text-xs text-[#98c1d9] font-medium mr-1">
-        {salesTimeframe.includes("days") && "day(s) ago"}
-        {salesTimeframe.includes("months") && "month(s) ago"}
-        {salesTimeframe.includes("years") && "year(s) ago"}
-      </span>
-    </div>
-  )}
-
-  <Select value={salesTimeframe} onValueChange={(v) => setSalesTimeframe(v)}>
-    <SelectTrigger className="w-44 h-8 text-xs bg-[#293241] border-[#98c1d9]/30 text-white">
-      <SelectValue placeholder="Select timeframe" />
-    </SelectTrigger>
-    <SelectContent className="bg-[#3d5a80] border-[#98c1d9] text-white">
-      <SelectItem value="day">Today</SelectItem>
-      <SelectItem value="month">This Month</SelectItem>
-      <SelectItem value="year">This Year</SelectItem>
-      <hr className="my-1 border-[#98c1d9]/20" />
-      <SelectItem value="custom_days">Others: Days Ago</SelectItem>
-      <SelectItem value="custom_months">Others: Months Ago</SelectItem>
-      <SelectItem value="custom_years">Others: Years Ago</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {filteredCustomers.map((customer) => (
+                  <div
+                    key={customer.id}
+                    className="flex items-center justify-between p-3 bg-[#293241] rounded-lg"
+                  >
+                    <div>
+                      <p className="text-[#e0fbfc] font-medium">{customer.name}</p>
+                      <p className="text-xs text-[#98c1d9]">{customer.id}</p>
+                      {customer.balance > 0 && (
+                        <p className="text-xs text-red-400">Balance: P{customer.balance.toFixed(2)}</p>
+                      )}
+                      {customer.trustScore === "not_good" && (
+                        <p className="text-[11px] font-bold text-red-500 uppercase mt-0.5">🚫 Cannot apply for services</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold px-2 py-1 rounded bg-[#3d5a80] text-[#e0fbfc] uppercase">
+                        {customer.trustScore.replace('_', ' ')}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-   {/* Daily Sales Receipt */}
+          {/* Daily Sales Receipt */}
           <Card className={`bg-[#3d5a80] border-[#98c1d9]/30 ${activeStatFilter !== "all" && activeStatFilter !== "sales" && activeStatFilter !== "transactions" ? "ring-2 ring-amber-500" : ""}`}>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -514,7 +466,6 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  {/* Dynamic number input box that displays ONLY when choosing "Others" selections */}
                   {["custom_days", "custom_months", "custom_years"].includes(salesTimeframe) && (
                     <Input
                       type="number"
@@ -635,7 +586,6 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
                             />
                           </div>
 
-                          {/* [ADDITION 1] Status Modifier Field & Delivery Markup controls */}
                           <div className="grid grid-cols-2 gap-2">
                             <Select
                               value={editingStockData.status || "available"}
@@ -647,125 +597,124 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
                               <SelectContent className="bg-[#293241] text-white">
                                 <SelectItem value="available">Available</SelectItem>
                                 <SelectItem value="out_of_stock">Sold out</SelectItem>
-                             </SelectContent>
-            </Select>
-            <Input
-              type="number"
-              disabled={freeDeliveryEvent}
-              value={freeDeliveryEvent ? 0 : (editingStockData.deliveryFee || "")}
-              onChange={(e) => setEditingStockData({ ...editingStockData, deliveryFee: parseFloat(e.target.value) })}
-              className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
-              placeholder="Delivery fee"
-            />
-          </div>
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              type="number"
+                              disabled={freeDeliveryEvent}
+                              value={freeDeliveryEvent ? 0 : (editingStockData.deliveryFee || "")}
+                              onChange={(e) => setEditingStockData({ ...editingStockData, deliveryFee: parseFloat(e.target.value) })}
+                              className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
+                              placeholder="Delivery fee"
+                            />
+                          </div>
 
-          <Input
-            value={editingStockData.description || ""}
-            onChange={(e) => setEditingStockData({ ...editingStockData, description: e.target.value })}
-            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
-            placeholder="Description"
-          />
-         <div className="flex gap-2">
-  <Button
-    size="sm"
-    className="flex-1 bg-green-500 hover:bg-green-600 h-8"
-    onClick={saveStockEdit}
-  >
-    <Check className="h-4 w-4" />
-  </Button>
-  <Button
-    size="sm" {/* FIXED: Removed duplicate size="sm" line from here */}
-    variant="outline"
-    className="flex-1 border-red-400 text-red-400 hover:bg-red-400/20 h-8"
-    onClick={cancelStockEdit}
-  >
-    <X className="h-4 w-4" />
-  </Button>
-</div>
-</div>
-) : (
-<>
-<button
-  className="absolute top-2 right-2 text-[#98c1d9] hover:text-[#e0fbfc]"
-  onClick={() => startEditingStock(item)}
->
-  <Edit2 className="h-4 w-4" />
-</button>
-<p className={`font-medium ${isLowStock ? "text-red-400" : "text-[#e0fbfc]"}`}>
-  {item.name}
-</p>
-<p className={`text-2xl font-bold ${isLowStock ? "text-red-400" : "text-[#98c1d9]"}`}>
-  {item.quantity} left
-</p>
-<p className="text-xs text-[#98c1d9]">{item.category}</p>
-{item.price && (
-  <p className="text-sm text-[#ee6c4d] mt-1">P{item.price.toFixed(2)}</p>
-)}
+                          <Input
+                            value={editingStockData.description || ""}
+                            onChange={(e) => setEditingStockData({ ...editingStockData, description: e.target.value })}
+                            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
+                            placeholder="Description"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-green-500 hover:bg-green-600 h-8"
+                              onClick={saveStockEdit}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 border-red-400 text-red-400 hover:bg-red-400/20 h-8"
+                              onClick={cancelStockEdit}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            className="absolute top-2 right-2 text-[#98c1d9] hover:text-[#e0fbfc]"
+                            onClick={() => startEditingStock(item)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <p className={`font-medium ${isLowStock ? "text-red-400" : "text-[#e0fbfc]"}`}>
+                            {item.name}
+                          </p>
+                          <p className={`text-2xl font-bold ${isLowStock ? "text-red-400" : "text-[#98c1d9]"}`}>
+                            {item.quantity} left
+                          </p>
+                          <p className="text-xs text-[#98c1d9]">{item.category}</p>
+                          {item.price && (
+                            <p className="text-sm text-[#ee6c4d] mt-1">P{item.price.toFixed(2)}</p>
+                          )}
 
-{/* Status, Delivery fee or Dynamic Event Free Delivery rendering tags */}
-<div className="mt-2 space-y-1">
-  {freeDeliveryEvent ? (
-    <p className="text-xs text-orange-400 font-bold flex items-center gap-1 animate-pulse">
-      <Truck className="h-3 w-3" /> Free delivery
-    </p>
-  ) : (
-    <p className="text-xs text-slate-400">
-      Delivery: {item.deliveryFee && item.deliveryFee > 0 ? `P${item.deliveryFee.toFixed(2)}` : "None"}
-    </p>
-  )}
-  <p className={`text-xs font-bold ${item.quantity <= 0 || item.status === "out_of_stock" ? "text-red-400" : "text-green-400"}`}>
-    Status: {item.quantity <= 0 || item.status === "out_of_stock" ? "Sold Out" : "Available"}
-  </p>
-</div>
+                          <div className="mt-2 space-y-1">
+                            {freeDeliveryEvent ? (
+                              <p className="text-xs text-orange-400 font-bold flex items-center gap-1 animate-pulse">
+                                <Truck className="h-3 w-3" /> Free delivery
+                              </p>
+                            ) : (
+                              <p className="text-xs text-slate-400">
+                                Delivery: {item.deliveryFee && item.deliveryFee > 0 ? `P${item.deliveryFee.toFixed(2)}` : "None"}
+                              </p>
+                            )}
+                            <p className={`text-xs font-bold ${item.quantity <= 0 || item.status === "out_of_stock" ? "text-red-400" : "text-green-400"}`}>
+                              Status: {item.quantity <= 0 || item.status === "out_of_stock" ? "Sold Out" : "Available"}
+                            </p>
+                          </div>
 
-{item.description && (
-  <p className="text-xs text-[#98c1d9]/70 mt-1">{item.description}</p>
-)}
-{isLowStock && (
-  <div className="mt-2 text-xs text-red-400 font-bold uppercase">
-    Restock needed!
-  </div>
-)}
-</>
-)}
-</div>
-)
-})}
-</div>
-</CardContent>
-</Card>
+                          {item.description && (
+                            <p className="text-xs text-[#98c1d9]/70 mt-1">{item.description}</p>
+                          )}
+                          {isLowStock && (
+                            <div className="mt-2 text-xs text-red-400 font-bold uppercase">
+                              Restock needed!
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+            </div>
+          </CardContent>
+        </Card>
 
-{/* Customer Timeline Status Legend */}
-<Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-8">
-<CardHeader>
-<CardTitle className="text-[#e0fbfc]">Timeline Status Legend</CardTitle>
-</CardHeader>
-<CardContent> {/* FIXED: Removed the stray '>' symbol at the very end here */}
-<div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-  <div className="flex items-center gap-2">
-    <div className="w-3 h-3 rounded-full bg-red-400" />
-    <span className="text-sm text-[#e0fbfc]">Unpaid</span>
-  </div>
-  <div className="flex items-center gap-2">
-    <div className="w-3 h-3 rounded-full bg-yellow-400" />
-    <span className="text-sm text-[#e0fbfc]">In Cart</span>
-  </div>
-  <div className="flex items-center gap-2">
-    <div className="w-3 h-3 rounded-full bg-orange-400" />
-    <span className="text-sm text-[#e0fbfc]">Overdue (+2% penalty)</span>
-  </div>
-  <div className="flex items-center gap-2">
-    <div className="w-3 h-3 rounded-full bg-green-400" />
-    <span className="text-sm text-[#e0fbfc]">Paid</span>
-  </div>
-  <div className="flex items-center gap-2">
-    <div className="w-3 h-3 rounded-full bg-red-600" />
-    <span className="text-sm text-red-400 font-bold">Not Good</span>
-  </div>
-</div>
-</CardContent>
-</Card>
-</div>
-</section>
-)
+        {/* Customer Timeline Status Legend */}
+        <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-8">
+          <CardHeader>
+            <CardTitle className="text-[#e0fbfc]">Timeline Status Legend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <span className="text-sm text-[#e0fbfc]">Unpaid</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                <span className="text-sm text-[#e0fbfc]">In Cart</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-orange-400" />
+                <span className="text-sm text-[#e0fbfc]">Overdue (+2% penalty)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-400" />
+                <span className="text-sm text-[#e0fbfc]">Paid</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-600" />
+                <span className="text-sm text-red-400 font-bold">Not Good</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  )
 }
