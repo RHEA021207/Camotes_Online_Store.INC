@@ -184,7 +184,9 @@ export function AdminDashboard({
     setEditingStockId(null)
     setEditingStockData({})
   }
-
+const handleStatusChange = (customerId: string, newStatus: string) => {
+    onUpdateTrustScore(customerId, newStatus as "new" | "good" | "excellent" | "not_good")
+  }
   return (
     <section className="py-12 bg-[#293241]" id="admin">
       <div className="container mx-auto px-4">
@@ -436,28 +438,40 @@ export function AdminDashboard({
         )}
       </div>
       
-      {/* Right Side Badge: Displaying the Trust Score with dynamic colors */}
-      <div className="flex items-center gap-2">
-        {customer.trustScore === "excellent" && (
-          <span className="text-xs font-bold px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 uppercase tracking-wider">
-            Excellent
-          </span>
-        )}
-        {customer.trustScore === "good" && (
-          <span className="text-xs font-bold px-3 py-1 rounded bg-sky-500/10 border border-sky-500/30 text-sky-400 uppercase tracking-wider">
-            Good
-          </span>
-        )}
-        {customer.trustScore === "new" && (
-          <span className="text-xs font-bold px-3 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 uppercase tracking-wider">
-            New
-          </span>
+      {/* Customer List with Interactive Dropdown */}
+<div className="max-h-64 overflow-y-auto space-y-2">
+  {filteredCustomers.map((customer) => (
+    <div
+      key={customer.id}
+      className="flex items-center justify-between p-3 bg-[#293241] rounded-lg"
+    >
+      <div>
+        <p className="text-[#e0fbfc] font-medium">{customer.name}</p>
+        <p className="text-xs text-[#98c1d9]">{customer.id}</p>
+        {customer.balance > 0 && (
+          <p className="text-xs text-red-400">Balance: P{customer.balance.toFixed(2)}</p>
         )}
         {customer.trustScore === "not_good" && (
-          <span className="text-xs font-bold px-3 py-1 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 uppercase tracking-wider">
-            Not Good
-          </span>
+          <p className="text-[11px] font-bold text-red-500 uppercase mt-0.5">🚫 Cannot apply for services</p>
         )}
+      </div>
+      
+      {/* Right Side Status Editor Dropdown */}
+      <div className="flex items-center gap-2">
+        <Select 
+          value={customer.trustScore} 
+          onValueChange={(newStatus) => handleStatusChange(customer.id, newStatus)}
+        >
+          <SelectTrigger className="w-[130px] h-8 bg-[#3d5a80] border-[#98c1d9]/30 text-white text-xs font-bold uppercase">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-[#293241] text-white border-[#98c1d9]/20">
+            <SelectItem value="excellent" className="text-emerald-400 font-bold focus:bg-slate-700">EXCELLENT</SelectItem>
+            <SelectItem value="good" className="text-sky-400 font-bold focus:bg-slate-700">GOOD</SelectItem>
+            <SelectItem value="new" className="text-amber-400 font-bold focus:bg-slate-700">NEW</SelectItem>
+            <SelectItem value="not_good" className="text-rose-400 font-bold focus:bg-slate-700">NOT GOOD</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   ))}
@@ -495,21 +509,39 @@ export function AdminDashboard({
                     />
                   )}
 
-                  <Select value={salesTimeframe} onValueChange={(v) => setSalesTimeframe(v)}>
-                    <SelectTrigger className="w-44 h-8 text-xs bg-[#293241] border-[#98c1d9]/30 text-white">
-                      <SelectValue placeholder="Select timeframe" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#3d5a80] border-[#98c1d9] text-white">
-                      <SelectItem value="day">Today</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                      <SelectItem value="year">This Year</SelectItem>
-                      <hr className="my-1 border-[#98c1d9]/20" />
-                      <SelectItem value="custom_days">Others: Days Ago</SelectItem>
-                      <SelectItem value="custom_months">Others: Months Ago</SelectItem>
-                      <SelectItem value="custom_years">Others: Years Ago</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <Select value={timeFrame} onValueChange={(value) => setTimeFrame(value)}>
+  <SelectTrigger className="w-[180px]">
+    <SelectValue placeholder="Select timeframe" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="today">Today</SelectItem>
+    <SelectItem value="month">This Month</SelectItem>
+    <SelectItem value="year">This Year</SelectItem>
+    <SelectItem value="custom">Others...</SelectItem>
+  </SelectContent>
+</Select>
+
+{/* Conditionally render manual inputs if "Others..." is selected */}
+{timeFrame === 'custom' && (
+  <div className="flex items-center gap-2 mt-2">
+    <input 
+      type="number" 
+      min="1" 
+      className="border rounded p-1 w-16 text-black"
+      value={customValue}
+      onChange={(e) => setCustomValue(e.target.value)}
+    />
+    <select 
+      value={customUnit} 
+      onChange={(e) => setCustomUnit(e.target.value)}
+      className="border rounded p-1 text-black"
+    >
+      <option value="days">Days Ago</option>
+      <option value="months">Months Ago</option>
+      <option value="years">Years Ago</option>
+    </select>
+  </div>
+)}
               </div>
             </CardHeader>
             <CardContent>
