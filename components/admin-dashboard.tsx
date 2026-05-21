@@ -103,7 +103,9 @@ export function AdminDashboard({
   // State for custom date receipt selection filters
   const [salesTimeframe, setSalesTimeframe] = useState<string>("day")
   const [customValue, setCustomValue] = useState<number>(1)
+  const [customUnit, setCustomUnit] = useState<string>("days")
   const [receiptHeading, setReceiptHeading] = useState<string>("Daily Sales Receipt")
+  
   const lowStockItems = stock.filter((item) => item.quantity < 3)
   
   // Apply filtering to customers based on query search
@@ -125,19 +127,11 @@ export function AdminDashboard({
         return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
       } else if (salesTimeframe === "year") {
         return saleDate.getFullYear() === now.getFullYear();
-      } else if (salesTimeframe === "custom_days" || salesTimeframe === "others_days") {
+      } else if (salesTimeframe === "custom" || salesTimeframe === "custom_days" || salesTimeframe === "others_days") {
         const daysAgo = new Date();
         daysAgo.setDate(now.getDate() - customValue);
         daysAgo.setHours(0, 0, 0, 0); 
         return saleDate >= daysAgo;
-      } else if (salesTimeframe === "custom_months" || salesTimeframe === "others_months") {
-        const monthsAgo = new Date();
-        monthsAgo.setMonth(now.getMonth() - customValue);
-        return saleDate >= monthsAgo;
-      } else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years") {
-        const yearsAgo = new Date();
-        yearsAgo.setFullYear(now.getFullYear() - customValue);
-        return saleDate >= yearsAgo;
       }
       return true;
     });
@@ -184,9 +178,11 @@ export function AdminDashboard({
     setEditingStockId(null)
     setEditingStockData({})
   }
-const handleStatusChange = (customerId: string, newStatus: string) => {
+
+  const handleStatusChange = (customerId: string, newStatus: string) => {
     onUpdateTrustScore(customerId, newStatus as "new" | "good" | "excellent" | "not_good")
   }
+
   return (
     <section className="py-12 bg-[#293241]" id="admin">
       <div className="container mx-auto px-4">
@@ -355,7 +351,7 @@ const handleStatusChange = (customerId: string, newStatus: string) => {
                 <div>
                   <CardTitle className="text-[#e0fbfc]">Customer Management</CardTitle>
                   <CardDescription className="text-[#98c1d9]">
-                    Search by ID (e.g., COS-101) or name
+                    Search by ID or name
                   </CardDescription>
                 </div>
                 <Button
@@ -421,61 +417,43 @@ const handleStatusChange = (customerId: string, newStatus: string) => {
               </div>
 
               {/* Customer List */}
-<div className="max-h-64 overflow-y-auto space-y-2">
-  {filteredCustomers.map((customer) => (
-    <div
-      key={customer.id}
-      className="flex items-center justify-between p-3 bg-[#293241] rounded-lg"
-    >
-      <div>
-        <p className="text-[#e0fbfc] font-medium">{customer.name}</p>
-        <p className="text-xs text-[#98c1d9]">{customer.id}</p>
-        {customer.balance > 0 && (
-          <p className="text-xs text-red-400">Balance: P{customer.balance.toFixed(2)}</p>
-        )}
-        {customer.trustScore === "not_good" && (
-          <p className="text-[11px] font-bold text-red-500 uppercase mt-0.5">🚫 Cannot apply for services</p>
-        )}
-      </div>
-      
-      {/* Customer List with Interactive Dropdown */}
-<div className="max-h-64 overflow-y-auto space-y-2">
-  {filteredCustomers.map((customer) => (
-    <div
-      key={customer.id}
-      className="flex items-center justify-between p-3 bg-[#293241] rounded-lg"
-    >
-      <div>
-        <p className="text-[#e0fbfc] font-medium">{customer.name}</p>
-        <p className="text-xs text-[#98c1d9]">{customer.id}</p>
-        {customer.balance > 0 && (
-          <p className="text-xs text-red-400">Balance: P{customer.balance.toFixed(2)}</p>
-        )}
-        {customer.trustScore === "not_good" && (
-          <p className="text-[11px] font-bold text-red-500 uppercase mt-0.5">🚫 Cannot apply for services</p>
-        )}
-      </div>
-      
-      {/* Right Side Status Editor Dropdown */}
-      <div className="flex items-center gap-2">
-        <Select 
-          value={customer.trustScore} 
-          onValueChange={(newStatus) => handleStatusChange(customer.id, newStatus)}
-        >
-          <SelectTrigger className="w-[130px] h-8 bg-[#3d5a80] border-[#98c1d9]/30 text-white text-xs font-bold uppercase">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-[#293241] text-white border-[#98c1d9]/20">
-            <SelectItem value="excellent" className="text-emerald-400 font-bold focus:bg-slate-700">EXCELLENT</SelectItem>
-            <SelectItem value="good" className="text-sky-400 font-bold focus:bg-slate-700">GOOD</SelectItem>
-            <SelectItem value="new" className="text-amber-400 font-bold focus:bg-slate-700">NEW</SelectItem>
-            <SelectItem value="not_good" className="text-rose-400 font-bold focus:bg-slate-700">NOT GOOD</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  ))}
-</div>
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {filteredCustomers.map((customer) => (
+                  <div
+                    key={customer.id}
+                    className="flex items-center justify-between p-3 bg-[#293241] rounded-lg"
+                  >
+                    <div>
+                      <p className="text-[#e0fbfc] font-medium">{customer.name}</p>
+                      <p className="text-xs text-[#98c1d9]">{customer.id}</p>
+                      {customer.balance > 0 && (
+                        <p className="text-xs text-red-400">Balance: P{customer.balance.toFixed(2)}</p>
+                      )}
+                      {customer.trustScore === "not_good" && (
+                        <p className="text-[11px] font-bold text-red-500 uppercase mt-0.5">🚫 Cannot apply for services</p>
+                      )}
+                    </div>
+                    
+                    {/* Right Side Status Editor Dropdown */}
+                    <div className="flex items-center gap-2">
+                      <Select 
+                        value={customer.trustScore} 
+                        onValueChange={(newStatus) => handleStatusChange(customer.id, newStatus)}
+                      >
+                        <SelectTrigger className="w-[130px] h-8 bg-[#3d5a80] border-[#98c1d9]/30 text-white text-xs font-bold uppercase">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#293241] text-white border-[#98c1d9]/20">
+                          <SelectItem value="excellent" className="text-emerald-400 font-bold focus:bg-slate-700">EXCELLENT</SelectItem>
+                          <SelectItem value="good" className="text-sky-400 font-bold focus:bg-slate-700">GOOD</SelectItem>
+                          <SelectItem value="new" className="text-amber-400 font-bold focus:bg-slate-700">NEW</SelectItem>
+                          <SelectItem value="not_good" className="text-rose-400 font-bold focus:bg-slate-700">NOT GOOD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
@@ -498,50 +476,40 @@ const handleStatusChange = (customerId: string, newStatus: string) => {
                   </CardDescription>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  {["custom_days", "custom_months", "custom_years"].includes(salesTimeframe) && (
-                    <Input
-                      type="number"
-                      min={1}
-                      value={customValue}
-                      onChange={(e) => setCustomValue(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-16 h-8 text-center bg-[#293241] border-[#98c1d9]/30 text-white font-bold text-xs"
-                    />
+                <div className="flex flex-col gap-2">
+                  <Select value={salesTimeframe} onValueChange={(value) => setSalesTimeframe(value)}>
+                    <SelectTrigger className="w-[180px] bg-[#293241] text-white border-[#98c1d9]/30">
+                      <SelectValue placeholder="Select timeframe" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#293241] text-white">
+                      <SelectItem value="day">Today</SelectItem>
+                      <SelectItem value="month">This Month</SelectItem>
+                      <SelectItem value="year">This Year</SelectItem>
+                      <SelectItem value="custom">Others...</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {salesTimeframe === 'custom' && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <input 
+                        type="number" 
+                        min="1" 
+                        className="border rounded p-1 w-16 text-black"
+                        value={customValue}
+                        onChange={(e) => setCustomValue(Math.max(1, parseInt(e.target.value) || 1))}
+                      />
+                      <select 
+                        value={customUnit} 
+                        onChange={(e) => setCustomUnit(e.target.value)}
+                        className="border rounded p-1 text-black"
+                      >
+                        <option value="days">Days Ago</option>
+                        <option value="months">Months Ago</option>
+                        <option value="years">Years Ago</option>
+                      </select>
+                    </div>
                   )}
-
-                  <Select value={timeFrame} onValueChange={(value) => setTimeFrame(value)}>
-  <SelectTrigger className="w-[180px]">
-    <SelectValue placeholder="Select timeframe" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="today">Today</SelectItem>
-    <SelectItem value="month">This Month</SelectItem>
-    <SelectItem value="year">This Year</SelectItem>
-    <SelectItem value="custom">Others...</SelectItem>
-  </SelectContent>
-</Select>
-
-{/* Conditionally render manual inputs if "Others..." is selected */}
-{timeFrame === 'custom' && (
-  <div className="flex items-center gap-2 mt-2">
-    <input 
-      type="number" 
-      min="1" 
-      className="border rounded p-1 w-16 text-black"
-      value={customValue}
-      onChange={(e) => setCustomValue(e.target.value)}
-    />
-    <select 
-      value={customUnit} 
-      onChange={(e) => setCustomUnit(e.target.value)}
-      className="border rounded p-1 text-black"
-    >
-      <option value="days">Days Ago</option>
-      <option value="months">Months Ago</option>
-      <option value="years">Years Ago</option>
-    </select>
-  </div>
-)}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -734,8 +702,7 @@ const handleStatusChange = (customerId: string, newStatus: string) => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Customer Timeline Status Legend */}
+{/* Customer Timeline Status Legend */}
         <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-8">
           <CardHeader>
             <CardTitle className="text-[#e0fbfc]">Timeline Status Legend</CardTitle>
@@ -768,4 +735,4 @@ const handleStatusChange = (customerId: string, newStatus: string) => {
       </div>
     </section>
   )
-} 
+}
