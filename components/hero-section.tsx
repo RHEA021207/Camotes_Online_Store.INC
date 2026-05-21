@@ -16,7 +16,7 @@ export function HeroSection({ onBrowseServices }: HeroSectionProps) {
       {/* ========================================================================= */}
       <div className="absolute inset-0 z-0 pointer-events-none select-none">
         <Image
-          src="/images/hero-background.jpg"
+          src="public/images/hero-background.jpg"
           alt="Camotes Online Store Background"
           fill
           className="object-cover object-center opacity-25 brightness-75 contrast-125 mix-blend-screen"
