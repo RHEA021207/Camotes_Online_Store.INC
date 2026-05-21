@@ -114,62 +114,42 @@ export function AdminDashboard({
   )
 
  // [ADDITION 5] Date receipt calculation filtering logic
-  const getFilteredSales = () => {
-    const now = new Date()
+ const getFilteredSales = () => {
+  const now = new Date();
+  
+  return todaySales.filter((sale) => {
+    const saleDate = new Date(sale.timestamp);
+    if (isNaN(saleDate.getTime())) return true;
+
+    // --- Hardcoded standard filters ---
+    if (salesTimeframe === "month") {
+      return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
+    } else if (salesTimeframe === "year") {
+      return saleDate.getFullYear() === now.getFullYear();
+    } 
     
-    return todaySales.filter((sale) => {
-      const saleDate = new Date(sale.timestamp)
-      if (isNaN(saleDate.getTime())) return true 
-
-      // 1. Standard Timeframes
-      if (salesTimeframe === "day") {
-        if (receiptHeading !== "Daily Sales Receipt") setReceiptHeading("Daily Sales Receipt")
-        return saleDate.toDateString() === now.toDateString()
-      }
-      
-      if (salesTimeframe === "month") {
-        if (receiptHeading !== "Monthly Sales Receipt") setReceiptHeading("Monthly Sales Receipt")
-        return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear()
-      }
-      
-      if (salesTimeframe === "year") {
-        if (receiptHeading !== "Yearly Sales Receipt") setReceiptHeading("Yearly Sales Receipt")
-        return saleDate.getFullYear() === now.getFullYear()
-      }
-
-      // 2. Custom Input Options (e.g. 5 Months Ago)
-      const targetValue = customValue || 1
-
-      if (salesTimeframe === "custom_days") {
-        const targetDate = new Date()
-        targetDate.setDate(now.getDate() - targetValue)
-        const dayLabel = targetValue === 1 ? "Day" : "Days"
-        const expectedHeading = `${targetValue} ${dayLabel} Ago Sales Receipt`
-        if (receiptHeading !== expectedHeading) setReceiptHeading(expectedHeading)
-        return saleDate.toDateString() === targetDate.toDateString()
-      }
-
-      if (salesTimeframe === "custom_months") {
-        const targetDate = new Date()
-        targetDate.setMonth(now.getMonth() - targetValue)
-        const monthLabel = targetValue === 1 ? "Month" : "Months"
-        const expectedHeading = `${targetValue} ${monthLabel} Ago Sales Receipt`
-        if (receiptHeading !== expectedHeading) setReceiptHeading(expectedHeading)
-        return saleDate.getMonth() === targetDate.getMonth() && saleDate.getFullYear() === targetDate.getFullYear()
-      }
-
-      if (salesTimeframe === "custom_years") {
-        const targetDate = new Date()
-        targetDate.setFullYear(now.getFullYear() - targetValue)
-        const yearLabel = targetValue === 1 ? "Year" : "Years"
-        const expectedHeading = `${targetValue} ${yearLabel} Ago Sales Receipt`
-        if (receiptHeading !== expectedHeading) setReceiptHeading(expectedHeading)
-        return saleDate.getFullYear() === targetDate.getFullYear()
-      }
-
-      return true
-    })
-  }
+   // --- Dynamic "Others" custom input filters ---
+// Change "others_days" to "custom_days" to match your dropdown properties!
+else if (salesTimeframe === "custom_days" || salesTimeframe === "others_days") {
+  const daysAgo = new Date();
+  daysAgo.setDate(now.getDate() - customValue);
+  daysAgo.setHours(0, 0, 0, 0); 
+  return saleDate >= daysAgo;
+} 
+// Change to "custom_months"
+else if (salesTimeframe === "custom_months" || salesTimeframe === "others_months") {
+  const monthsAgo = new Date();
+  monthsAgo.setMonth(now.getMonth() - customValue);
+  return saleDate >= monthsAgo;
+} 
+// Change to "custom_years"
+else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years") {
+  const yearsAgo = new Date();
+  yearsAgo.setFullYear(now.getFullYear() - customValue);
+  return saleDate >= yearsAgo;
+}
+  });
+};
 
   const activeSalesItems = getFilteredSales()
   const totalSalesToday = activeSalesItems.reduce((sum, sale) => sum + sale.amount, 0)
@@ -466,24 +446,40 @@ export function AdminDashboard({
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Select
-                        value={customer.trustScore}
-                        onValueChange={(v: "new" | "good" | "excellent" | "not_good") =>
-                          onUpdateTrustScore(customer.id, v)
-                        }
-                      >
-                        <SelectTrigger className="w-28 h-8 text-xs bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#3d5a80] border-[#98c1d9]">
-                          <SelectItem value="new" className="text-yellow-400 text-xs">New</SelectItem>
-                          <SelectItem value="good" className="text-blue-400 text-xs">Good</SelectItem>
-                          <SelectItem value="excellent" className="text-green-400 text-xs">Excellent</SelectItem>
-                          {/* [ADDITION 4] Added Choice */}
-                          <SelectItem value="not_good" className="text-red-500 text-xs font-bold">Not Good</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+  {/* [PASTED & UPDATED NUMBER 3 HERE] */}
+  {/* Checks for both 'custom_' or 'others_' prefix prefixes so it won't crash */}
+  {(salesTimeframe.startsWith("custom_") || salesTimeframe.startsWith("others_")) && (
+    <div className="flex items-center gap-2 animate-in fade-in duration-200">
+      <Input
+        type="number"
+        min={1}
+        value={customValue}
+        onChange={(e) => setCustomValue(Math.max(1, parseInt(e.target.value) || 1))}
+        className="w-16 h-8 text-center bg-[#293241] border-[#98c1d9]/30 text-white font-bold text-xs focus:ring-1 focus:ring-orange-500"
+      />
+      <span className="text-xs text-[#98c1d9] font-medium mr-1">
+        {salesTimeframe.includes("days") && "day(s) ago"}
+        {salesTimeframe.includes("months") && "month(s) ago"}
+        {salesTimeframe.includes("years") && "year(s) ago"}
+      </span>
+    </div>
+  )}
+
+  <Select value={salesTimeframe} onValueChange={(v) => setSalesTimeframe(v)}>
+    <SelectTrigger className="w-44 h-8 text-xs bg-[#293241] border-[#98c1d9]/30 text-white">
+      <SelectValue placeholder="Select timeframe" />
+    </SelectTrigger>
+    <SelectContent className="bg-[#3d5a80] border-[#98c1d9] text-white">
+      <SelectItem value="day">Today</SelectItem>
+      <SelectItem value="month">This Month</SelectItem>
+      <SelectItem value="year">This Year</SelectItem>
+      <hr className="my-1 border-[#98c1d9]/20" />
+      <SelectItem value="custom_days">Others: Days Ago</SelectItem>
+      <SelectItem value="custom_months">Others: Months Ago</SelectItem>
+      <SelectItem value="custom_years">Others: Years Ago</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
                   </div>
                 ))}
               </div>
