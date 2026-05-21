@@ -647,89 +647,89 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
                               <SelectContent className="bg-[#293241] text-white">
                                 <SelectItem value="available">Available</SelectItem>
                                 <SelectItem value="out_of_stock">Sold out</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              type="number"
-                              disabled={freeDeliveryEvent}
-                              value={freeDeliveryEvent ? 0 : (editingStockData.deliveryFee || "")}
-                              onChange={(e) => setEditingStockData({ ...editingStockData, deliveryFee: parseFloat(e.target.value) })}
-                              className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
-                              placeholder="Delivery fee"
-                            />
-                          </div>
+                             </SelectContent>
+            </Select>
+            <Input
+              type="number"
+              disabled={freeDeliveryEvent}
+              value={freeDeliveryEvent ? 0 : (editingStockData.deliveryFee || "")}
+              onChange={(e) => setEditingStockData({ ...editingStockData, deliveryFee: parseFloat(e.target.value) })}
+              className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
+              placeholder="Delivery fee"
+            />
+          </div>
 
-                          <Input
-                            value={editingStockData.description || ""}
-                            onChange={(e) => setEditingStockData({ ...editingStockData, description: e.target.value })}
-                            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
-                            placeholder="Description"
-                          />
-                         <div className="flex gap-2">
-  <Button
-    size="sm"
-    className="flex-1 bg-green-500 hover:bg-green-600 h-8"
-    onClick={saveStockEdit}
-  >
-    <Check className="h-4 w-4" />
-  </Button>
-  <Button
-    size="sm" {/* FIXED: Removed duplicate size="sm" line from here */}
-    variant="outline"
-    className="flex-1 border-red-400 text-red-400 hover:bg-red-400/20 h-8"
-    onClick={cancelStockEdit}
-  >
-    <X className="h-4 w-4" />
-  </Button>
-</div>
-</div>
-) : (
-<>
-<button
-  className="absolute top-2 right-2 text-[#98c1d9] hover:text-[#e0fbfc]"
-  onClick={() => startEditingStock(item)}
->
-  <Edit2 className="h-4 w-4" />
-</button>
-<p className={`font-medium ${isLowStock ? "text-red-400" : "text-[#e0fbfc]"}`}>
-  {item.name}
-</p>
-<p className={`text-2xl font-bold ${isLowStock ? "text-red-400" : "text-[#98c1d9]"}`}>
-  {item.quantity} left
-</p>
-<p className="text-xs text-[#98c1d9]">{item.category}</p>
-{item.price && (
-  <p className="text-sm text-[#ee6c4d] mt-1">P{item.price.toFixed(2)}</p>
-)}
+          <Input
+            value={editingStockData.description || ""}
+            onChange={(e) => setEditingStockData({ ...editingStockData, description: e.target.value })}
+            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
+            placeholder="Description"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="flex-1 bg-green-500 hover:bg-green-600 h-8"
+              onClick={saveStockEdit}
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm" {/* FIXED: Removed duplicate size attribute from here */}
+              variant="outline"
+              className="flex-1 border-red-400 text-red-400 hover:bg-red-400/20 h-8"
+              onClick={cancelStockEdit}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <button
+            className="absolute top-2 right-2 text-[#98c1d9] hover:text-[#e0fbfc]"
+            onClick={() => startEditingStock(item)}
+          >
+            <Edit2 className="h-4 w-4" />
+          </button>
+          <p className={`font-medium ${isLowStock ? "text-red-400" : "text-[#e0fbfc]"}`}>
+            {item.name}
+          </p>
+          <p className={`text-2xl font-bold ${isLowStock ? "text-red-400" : "text-[#98c1d9]"}`}>
+            {item.quantity} left
+          </p>
+          <p className="text-xs text-[#98c1d9]">{item.category}</p>
+          {item.price && (
+            <p className="text-sm text-[#ee6c4d] mt-1">P{item.price.toFixed(2)}</p>
+          )}
+          
+          {/* [ADDITION 1 & 3] Status, Delivery fee or Dynamic Event Free Delivery rendering tags */}
+          <div className="mt-2 space-y-1">
+            {freeDeliveryEvent ? (
+              <p className="text-xs text-orange-400 font-bold flex items-center gap-1 animate-pulse">
+                <Truck className="h-3 w-3" /> Free delivery
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400">
+                Delivery: {item.deliveryFee && item.deliveryFee > 0 ? `P${item.deliveryFee.toFixed(2)}` : "None"}
+              </p>
+            )}
+            <p className={`text-xs font-bold ${item.quantity <= 0 || item.status === "out_of_stock" ? "text-red-400" : "text-green-400"}`}>
+              Status: {item.quantity <= 0 || item.status === "out_of_stock" ? "Sold Out" : "Available"}
+            </p>
+          </div>
 
-{/* Status, Delivery fee or Dynamic Event Free Delivery rendering tags */}
-<div className="mt-2 space-y-1">
-  {freeDeliveryEvent ? (
-    <p className="text-xs text-orange-400 font-bold flex items-center gap-1 animate-pulse">
-      <Truck className="h-3 w-3" /> Free delivery
-    </p>
-  ) : (
-    <p className="text-xs text-slate-400">
-      Delivery: {item.deliveryFee && item.deliveryFee > 0 ? `P${item.deliveryFee.toFixed(2)}` : "None"}
-    </p>
-  )}
-  <p className={`text-xs font-bold ${item.quantity <= 0 || item.status === "out_of_stock" ? "text-red-400" : "text-green-400"}`}>
-    Status: {item.quantity <= 0 || item.status === "out_of_stock" ? "Sold Out" : "Available"}
-  </p>
-</div>
-
-{item.description && (
-  <p className="text-xs text-[#98c1d9]/70 mt-1">{item.description}</p>
-)}
-{isLowStock && (
-  <div className="mt-2 text-xs text-red-400 font-bold uppercase">
-    Restock needed!
-  </div>
-)}
-</>
-)}
-</div>
-)
+          {item.description && (
+            <p className="text-xs text-[#98c1d9]/70 mt-1">{item.description}</p>
+          )}
+          {isLowStock && (
+            <div className="mt-2 text-xs text-red-400 font-bold uppercase">
+              Restock needed!
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
 })}
 </div>
 </CardContent>
@@ -740,33 +740,33 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
 <CardHeader>
 <CardTitle className="text-[#e0fbfc]">Timeline Status Legend</CardTitle>
 </CardHeader>
-<CardContent> 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <span className="text-sm text-[#e0fbfc]">Unpaid</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                <span className="text-sm text-[#e0fbfc]">In Cart</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-400" />
-                <span className="text-sm text-[#e0fbfc]">Overdue (+2% penalty)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-                <span className="text-sm text-[#e0fbfc]">Paid</span>
-              </div>
-              {/* [ADDITION 4] Status indicator color to the legend block */}
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-600" />
-                <span className="text-sm text-red-400 font-bold">Not Good</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </section>
-  )
+<CardContent> {/* FIXED: Stray character removed right here */}
+<div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+  <div className="flex items-center gap-2">
+    <div className="w-3 h-3 rounded-full bg-red-400" />
+    <span className="text-sm text-[#e0fbfc]">Unpaid</span>
+  </div>
+  <div className="flex items-center gap-2">
+    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+    <span className="text-sm text-[#e0fbfc]">In Cart</span>
+  </div>
+  <div className="flex items-center gap-2">
+    <div className="w-3 h-3 rounded-full bg-orange-400" />
+    <span className="text-sm text-[#e0fbfc]">Overdue (+2% penalty)</span>
+  </div>
+  <div className="flex items-center gap-2">
+    <div className="w-3 h-3 rounded-full bg-green-400" />
+    <span className="text-sm text-[#e0fbfc]">Paid</span>
+  </div>
+  {/* [ADDITION 4] Status indicator color to the legend block */}
+  <div className="flex items-center gap-2">
+    <div className="w-3 h-3 rounded-full bg-red-600" />
+    <span className="text-sm text-red-400 font-bold">Not Good</span>
+  </div>
+</div>
+</CardContent>
+</Card>
+</div>
+</section>
+)
 }
