@@ -674,7 +674,7 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
               <Check className="h-4 w-4" />
             </Button>
             <Button
-              size="sm" {/* FIXED: Removed duplicate size attribute from here */}
+              size="sm"
               variant="outline"
               className="flex-1 border-red-400 text-red-400 hover:bg-red-400/20 h-8"
               onClick={cancelStockEdit}
@@ -702,7 +702,6 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
             <p className="text-sm text-[#ee6c4d] mt-1">P{item.price.toFixed(2)}</p>
           )}
           
-          {/* [ADDITION 1 & 3] Status, Delivery fee or Dynamic Event Free Delivery rendering tags */}
           <div className="mt-2 space-y-1">
             {freeDeliveryEvent ? (
               <p className="text-xs text-orange-400 font-bold flex items-center gap-1 animate-pulse">
@@ -740,7 +739,7 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
 <CardHeader>
 <CardTitle className="text-[#e0fbfc]">Timeline Status Legend</CardTitle>
 </CardHeader>
-<CardContent> {/* FIXED: Stray character removed right here */}
+<CardContent>
 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
   <div className="flex items-center gap-2">
     <div className="w-3 h-3 rounded-full bg-red-400" />
@@ -758,7 +757,6 @@ else if (salesTimeframe === "custom_years" || salesTimeframe === "others_years")
     <div className="w-3 h-3 rounded-full bg-green-400" />
     <span className="text-sm text-[#e0fbfc]">Paid</span>
   </div>
-  {/* [ADDITION 4] Status indicator color to the legend block */}
   <div className="flex items-center gap-2">
     <div className="w-3 h-3 rounded-full bg-red-600" />
     <span className="text-sm text-red-400 font-bold">Not Good</span>
