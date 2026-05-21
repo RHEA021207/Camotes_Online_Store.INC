@@ -16,7 +16,8 @@ import {
   Check,
   X,
   LogOut,
-  DollarSign
+  DollarSign,
+  Truck
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -42,7 +43,7 @@ import { Switch } from "@/components/ui/switch"
 export interface Customer {
   id: string
   name: string
-  trustScore: "new" | "good" | "excellent"
+  trustScore: "new" | "good" | "excellent" | "not_good"
   balance: number
   lastPayment: string
 }
@@ -54,6 +55,8 @@ export interface StockItem {
   category: string
   price?: number
   description?: string
+  status?: "available" | "out_of_stock"
+  deliveryFee?: number
 }
 
 export interface SaleItem {
@@ -71,7 +74,7 @@ interface AdminDashboardProps {
   todaySales: SaleItem[]
   freeDeliveryEvent: boolean
   onToggleFreeDelivery: (value: boolean) => void
-  onUpdateTrustScore: (customerId: string, score: "new" | "good" | "excellent") => void
+  onUpdateTrustScore: (customerId: string, score: "new" | "good" | "excellent" | "not_good") => void
   onAddCustomer: (customer: Omit<Customer, "id">) => void
   onUpdateStock?: (stockId: string, updates: Partial<StockItem>) => void
   onLogout: () => void
@@ -94,14 +97,46 @@ export function AdminDashboard({
   const [editingStockId, setEditingStockId] = useState<string | null>(null)
   const [editingStockData, setEditingStockData] = useState<Partial<StockItem>>({})
 
+  // [ADDITION 2] State to track which metric stat box is clicked/filtered
+  const [activeStatFilter, setActiveStatFilter] = useState<"all" | "customers" | "sales" | "low_stock" | "transactions">("all")
+
+  // [ADDITION 5] State for custom date receipt selection filters
+  const [salesTimeframe, setSalesTimeframe] = useState<string>("day")
+
   const lowStockItems = stock.filter((item) => item.quantity < 3)
+  
+  // Apply filtering to customers based on query search
   const filteredCustomers = customers.filter(
     (c) =>
       c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const totalSalesToday = todaySales.reduce((sum, sale) => sum + sale.amount, 0)
+  // [ADDITION 5] Date receipt calculation filtering logic
+  const getFilteredSales = () => {
+    const now = new Date()
+    return todaySales.filter((sale) => {
+      const saleDate = new Date(sale.timestamp)
+      if (isNaN(saleDate.getTime())) return true 
+      
+      if (salesTimeframe === "month") {
+        return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear()
+      } else if (salesTimeframe === "year") {
+        return saleDate.getFullYear() === now.getFullYear()
+      } else if (salesTimeframe === "2_years_ago") {
+        return saleDate.getFullYear() === now.getFullYear() - 2
+      } else if (salesTimeframe === "3_months_ago") {
+        const threeMonthsAgo = new Date()
+        threeMonthsAgo.setMonth(now.getMonth() - 3)
+        return saleDate >= threeMonthsAgo
+      } else {
+        return saleDate.toDateString() === now.toDateString()
+      }
+    })
+  }
+
+  const activeSalesItems = getFilteredSales()
+  const totalSalesToday = activeSalesItems.reduce((sum, sale) => sum + sale.amount, 0)
   const penaltyRate = 0.02 // 2% penalty fee
 
   const handleAddCustomer = () => {
@@ -124,6 +159,8 @@ export function AdminDashboard({
       price: item.price,
       quantity: item.quantity,
       description: item.description,
+      status: item.status || "available",
+      deliveryFee: item.deliveryFee || 0
     })
   }
 
@@ -203,9 +240,12 @@ export function AdminDashboard({
           </CardContent>
         </Card>
 
-        {/* Stats Overview */}
+        {/* Stats Overview - [ADDITION 2] Interactive click filtering applied */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-[#3d5a80] border-[#98c1d9]/30">
+          <Card 
+            onClick={() => setActiveStatFilter(activeStatFilter === "customers" ? "all" : "customers")}
+            className={`cursor-pointer transition-all border ${activeStatFilter === "customers" ? "bg-[#ee6c4d] border-white" : "bg-[#3d5a80] border-[#98c1d9]/30 hover:border-[#98c1d9]"}`}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-full bg-blue-400/20">
@@ -219,7 +259,10 @@ export function AdminDashboard({
             </CardContent>
           </Card>
 
-          <Card className="bg-[#3d5a80] border-[#98c1d9]/30">
+          <Card 
+            onClick={() => setActiveStatFilter(activeStatFilter === "sales" ? "all" : "sales")}
+            className={`cursor-pointer transition-all border ${activeStatFilter === "sales" ? "bg-[#ee6c4d] border-white" : "bg-[#3d5a80] border-[#98c1d9]/30 hover:border-[#98c1d9]"}`}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-full bg-green-400/20">
@@ -235,7 +278,10 @@ export function AdminDashboard({
             </CardContent>
           </Card>
 
-          <Card className="bg-[#3d5a80] border-[#98c1d9]/30">
+          <Card 
+            onClick={() => setActiveStatFilter(activeStatFilter === "low_stock" ? "all" : "low_stock")}
+            className={`cursor-pointer transition-all border ${activeStatFilter === "low_stock" ? "bg-[#ee6c4d] border-white" : "bg-[#3d5a80] border-[#98c1d9]/30 hover:border-[#98c1d9]"}`}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-full bg-yellow-400/20">
@@ -251,7 +297,10 @@ export function AdminDashboard({
             </CardContent>
           </Card>
 
-          <Card className="bg-[#3d5a80] border-[#98c1d9]/30">
+          <Card 
+            onClick={() => setActiveStatFilter(activeStatFilter === "transactions" ? "all" : "transactions")}
+            className={`cursor-pointer transition-all border ${activeStatFilter === "transactions" ? "bg-[#ee6c4d] border-white" : "bg-[#3d5a80] border-[#98c1d9]/30 hover:border-[#98c1d9]"}`}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-full bg-purple-400/20">
@@ -259,7 +308,7 @@ export function AdminDashboard({
                 </div>
                 <div>
                   <p className="text-sm text-[#98c1d9]">Transactions</p>
-                  <p className="text-2xl font-bold text-[#e0fbfc]">{todaySales.length}</p>
+                  <p className="text-2xl font-bold text-[#e0fbfc]">{activeSalesItems.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -290,7 +339,7 @@ export function AdminDashboard({
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Customer Management */}
-          <Card className="bg-[#3d5a80] border-[#98c1d9]/30">
+          <Card className={`bg-[#3d5a80] border-[#98c1d9]/30 ${activeStatFilter !== "all" && activeStatFilter !== "customers" ? "ring-2 ring-amber-500" : ""}`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -326,7 +375,7 @@ export function AdminDashboard({
                     <Label className="text-[#e0fbfc]">Initial Trust Score</Label>
                     <Select
                       value={newCustomer.trustScore}
-                      onValueChange={(v: "new" | "good" | "excellent") =>
+                      onValueChange={(v: "new" | "good" | "excellent" | "not_good") =>
                         setNewCustomer({ ...newCustomer, trustScore: v })
                       }
                     >
@@ -337,6 +386,8 @@ export function AdminDashboard({
                         <SelectItem value="new" className="text-[#e0fbfc]">New</SelectItem>
                         <SelectItem value="good" className="text-[#e0fbfc]">Good Payer</SelectItem>
                         <SelectItem value="excellent" className="text-[#e0fbfc]">Excellent</SelectItem>
+                        {/* [ADDITION 4] New Choice */}
+                        <SelectItem value="not_good" className="text-red-400">Not Good</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -373,11 +424,15 @@ export function AdminDashboard({
                       {customer.balance > 0 && (
                         <p className="text-xs text-red-400">Balance: P{customer.balance.toFixed(2)}</p>
                       )}
+                      {/* [ADDITION 4] Restriction Label feedback text */}
+                      {customer.trustScore === "not_good" && (
+                        <p className="text-[11px] font-bold text-red-500 uppercase mt-0.5">🚫 Cannot apply for services</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Select
                         value={customer.trustScore}
-                        onValueChange={(v: "new" | "good" | "excellent") =>
+                        onValueChange={(v: "new" | "good" | "excellent" | "not_good") =>
                           onUpdateTrustScore(customer.id, v)
                         }
                       >
@@ -388,6 +443,8 @@ export function AdminDashboard({
                           <SelectItem value="new" className="text-yellow-400 text-xs">New</SelectItem>
                           <SelectItem value="good" className="text-blue-400 text-xs">Good</SelectItem>
                           <SelectItem value="excellent" className="text-green-400 text-xs">Excellent</SelectItem>
+                          {/* [ADDITION 4] Added Choice */}
+                          <SelectItem value="not_good" className="text-red-500 text-xs font-bold">Not Good</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -398,7 +455,7 @@ export function AdminDashboard({
           </Card>
 
           {/* Daily Sales Receipt */}
-          <Card className="bg-[#3d5a80] border-[#98c1d9]/30">
+          <Card className={`bg-[#3d5a80] border-[#98c1d9]/30 ${activeStatFilter !== "all" && activeStatFilter !== "sales" && activeStatFilter !== "transactions" ? "ring-2 ring-amber-500" : ""}`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -407,6 +464,7 @@ export function AdminDashboard({
                     Daily Sales Receipt
                   </CardTitle>
                   <CardDescription className="text-[#98c1d9]">
+                    {/* [ADDITION 5] Fixed current web date display */}
                     {new Date().toLocaleDateString("en-US", {
                       weekday: "long",
                       year: "numeric",
@@ -415,10 +473,23 @@ export function AdminDashboard({
                     })}
                   </CardDescription>
                 </div>
+                {/* [ADDITION 5] Interactive Frame Picker dropdown UI layout alignment */}
+                <Select value={salesTimeframe} onValueChange={(v) => setSalesTimeframe(v)}>
+                  <SelectTrigger className="w-36 h-8 text-xs bg-[#293241] border-[#98c1d9]/30 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#3d5a80] border-[#98c1d9] text-white">
+                    <SelectItem value="day">Today</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="3_months_ago">3 Months Ago</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                    <SelectItem value="2_years_ago">2 Years Ago</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardHeader>
             <CardContent>
-              {todaySales.length > 0 ? (
+              {activeSalesItems.length > 0 ? (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -429,7 +500,7 @@ export function AdminDashboard({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {todaySales.map((sale) => (
+                      {activeSalesItems.map((sale) => (
                         <TableRow key={sale.id} className="border-[#98c1d9]/30">
                           <TableCell className="text-[#e0fbfc]">{sale.customerName}</TableCell>
                           <TableCell className="text-[#98c1d9]">{sale.item}</TableCell>
@@ -450,7 +521,7 @@ export function AdminDashboard({
               ) : (
                 <div className="text-center py-8">
                   <Receipt className="h-12 w-12 text-[#98c1d9]/50 mx-auto mb-4" />
-                  <p className="text-[#98c1d9]">No sales recorded today</p>
+                  <p className="text-[#98c1d9]">No sales recorded for this timeframe</p>
                 </div>
               )}
             </CardContent>
@@ -458,7 +529,7 @@ export function AdminDashboard({
         </div>
 
         {/* Inventory Overview with Live Editing */}
-        <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-8">
+        <Card className={`bg-[#3d5a80] border-[#98c1d9]/30 mt-8 ${activeStatFilter !== "all" && activeStatFilter !== "low_stock" ? "ring-2 ring-amber-500" : ""}`}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-[#e0fbfc] flex items-center gap-2">
@@ -470,98 +541,143 @@ export function AdminDashboard({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {stock.map((item) => {
-                const isLowStock = item.quantity < 3
-                const isEditing = editingStockId === item.id
+              {stock
+                .filter((item) => activeStatFilter === "low_stock" ? item.quantity < 3 : true)
+                .map((item) => {
+                  const isLowStock = item.quantity < 3
+                  const isEditing = editingStockId === item.id
 
-                return (
-                  <div
-                    key={item.id}
-                    className={`p-4 rounded-lg relative ${
-                      isLowStock
-                        ? "bg-red-500/20 border-2 border-red-500"
-                        : "bg-[#293241] border border-[#98c1d9]/30"
-                    }`}
-                  >
-                    {isEditing ? (
-                      <div className="space-y-2">
-                        <Input
-                          value={editingStockData.name || ""}
-                          onChange={(e) => setEditingStockData({ ...editingStockData, name: e.target.value })}
-                          className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
-                          placeholder="Name"
-                        />
-                        <div className="flex gap-2">
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-4 rounded-lg relative ${
+                        isLowStock
+                          ? "bg-red-500/20 border-2 border-red-500"
+                          : "bg-[#293241] border border-[#98c1d9]/30"
+                      }`}
+                    >
+                      {isEditing ? (
+                        <div className="space-y-2">
                           <Input
-                            type="number"
-                            value={editingStockData.price || ""}
-                            onChange={(e) => setEditingStockData({ ...editingStockData, price: parseFloat(e.target.value) })}
+                            value={editingStockData.name || ""}
+                            onChange={(e) => setEditingStockData({ ...editingStockData, name: e.target.value })}
                             className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
-                            placeholder="Price"
+                            placeholder="Name"
                           />
-                          <Input
-                            type="number"
-                            value={editingStockData.quantity || ""}
-                            onChange={(e) => setEditingStockData({ ...editingStockData, quantity: parseInt(e.target.value) })}
-                            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8 w-20"
-                            placeholder="Qty"
-                          />
-                        </div>
-                        <Input
-                          value={editingStockData.description || ""}
-                          onChange={(e) => setEditingStockData({ ...editingStockData, description: e.target.value })}
-                          className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
-                          placeholder="Description"
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            className="flex-1 bg-green-500 hover:bg-green-600 h-8"
-                            onClick={saveStockEdit}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 border-red-400 text-red-400 hover:bg-red-400/20 h-8"
-                            onClick={cancelStockEdit}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          className="absolute top-2 right-2 text-[#98c1d9] hover:text-[#e0fbfc]"
-                          onClick={() => startEditingStock(item)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <p className={`font-medium ${isLowStock ? "text-red-400" : "text-[#e0fbfc]"}`}>
-                          {item.name}
-                        </p>
-                        <p className={`text-2xl font-bold ${isLowStock ? "text-red-400" : "text-[#98c1d9]"}`}>
-                          {item.quantity}
-                        </p>
-                        <p className="text-xs text-[#98c1d9]">{item.category}</p>
-                        {item.price && (
-                          <p className="text-sm text-[#ee6c4d] mt-1">P{item.price.toFixed(2)}</p>
-                        )}
-                        {item.description && (
-                          <p className="text-xs text-[#98c1d9]/70 mt-1">{item.description}</p>
-                        )}
-                        {isLowStock && (
-                          <div className="mt-2 text-xs text-red-400 font-bold uppercase">
-                            Restock needed!
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              value={editingStockData.price || ""}
+                              onChange={(e) => setEditingStockData({ ...editingStockData, price: parseFloat(e.target.value) })}
+                              className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
+                              placeholder="Price"
+                            />
+                            <Input
+                              type="number"
+                              value={editingStockData.quantity ?? ""}
+                              onChange={(e) => setEditingStockData({ ...editingStockData, quantity: parseInt(e.target.value) })}
+                              className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8 w-20"
+                              placeholder="Qty"
+                            />
                           </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )
-              })}
+
+                          {/* [ADDITION 1] Status Modifier Field & Delivery Markup controls */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <Select
+                              value={editingStockData.status || "available"}
+                              onValueChange={(v: "available" | "out_of_stock") => setEditingStockData({ ...editingStockData, status: v })}
+                            >
+                              <SelectTrigger className="h-8 bg-[#3d5a80] text-white border-[#98c1d9]/30 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-[#293241] text-white">
+                                <SelectItem value="available">Available</SelectItem>
+                                <SelectItem value="out_of_stock">Sold out</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              type="number"
+                              disabled={freeDeliveryEvent}
+                              value={freeDeliveryEvent ? 0 : (editingStockData.deliveryFee || "")}
+                              onChange={(e) => setEditingStockData({ ...editingStockData, deliveryFee: parseFloat(e.target.value) })}
+                              className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
+                              placeholder="Delivery fee"
+                            />
+                          </div>
+
+                          <Input
+                            value={editingStockData.description || ""}
+                            onChange={(e) => setEditingStockData({ ...editingStockData, description: e.target.value })}
+                            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] text-sm h-8"
+                            placeholder="Description"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-green-500 hover:bg-green-600 h-8"
+                              onClick={saveStockEdit}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 border-red-400 text-red-400 hover:bg-red-400/20 h-8"
+                              onClick={cancelStockEdit}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            className="absolute top-2 right-2 text-[#98c1d9] hover:text-[#e0fbfc]"
+                            onClick={() => startEditingStock(item)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <p className={`font-medium ${isLowStock ? "text-red-400" : "text-[#e0fbfc]"}`}>
+                            {item.name}
+                          </p>
+                          <p className={`text-2xl font-bold ${isLowStock ? "text-red-400" : "text-[#98c1d9]"}`}>
+                            {item.quantity} left
+                          </p>
+                          <p className="text-xs text-[#98c1d9]">{item.category}</p>
+                          {item.price && (
+                            <p className="text-sm text-[#ee6c4d] mt-1">P{item.price.toFixed(2)}</p>
+                          )}
+                          
+                          {/* [ADDITION 1 & 3] Status, Delivery fee or Dynamic Event Free Delivery rendering tags */}
+                          <div className="mt-2 space-y-1">
+                            {freeDeliveryEvent ? (
+                              <p className="text-xs text-orange-400 font-bold flex items-center gap-1 animate-pulse">
+                                <Truck className="h-3 w-3" /> Free delivery
+                              </p>
+                            ) : (
+                              <p className="text-xs text-slate-400">
+                                Delivery: {item.deliveryFee && item.deliveryFee > 0 ? `P${item.deliveryFee.toFixed(2)}` : "None"}
+                              </p>
+                            )}
+                            <p className={`text-xs font-bold ${item.quantity <= 0 || item.status === "out_of_stock" ? "text-red-400" : "text-green-400"}`}>
+                              Status: {item.quantity <= 0 || item.status === "out_of_stock" ? "Sold Out" : "Available"}
+                            </p>
+                          </div>
+
+                          {item.description && (
+                            <p className="text-xs text-[#98c1d9]/70 mt-1">{item.description}</p>
+                          )}
+                          {isLowStock && (
+                            <div className="mt-2 text-xs text-red-400 font-bold uppercase">
+                              Restock needed!
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
             </div>
           </CardContent>
         </Card>
@@ -572,7 +688,7 @@ export function AdminDashboard({
             <CardTitle className="text-[#e0fbfc]">Timeline Status Legend</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-400" />
                 <span className="text-sm text-[#e0fbfc]">Unpaid</span>
@@ -588,6 +704,11 @@ export function AdminDashboard({
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-400" />
                 <span className="text-sm text-[#e0fbfc]">Paid</span>
+              </div>
+              {/* [ADDITION 4] Status indicator color to the legend block */}
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-600" />
+                <span className="text-sm text-red-400 font-bold">Not Good</span>
               </div>
             </div>
           </CardContent>
