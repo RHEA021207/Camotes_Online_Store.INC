@@ -97,12 +97,13 @@ export function AdminDashboard({
   const [editingStockId, setEditingStockId] = useState<string | null>(null)
   const [editingStockData, setEditingStockData] = useState<Partial<StockItem>>({})
 
-  // [ADDITION 2] State to track which metric stat box is clicked/filtered
+ // [ADDITION 2] State to track which metric stat box is clicked/filtered
   const [activeStatFilter, setActiveStatFilter] = useState<"all" | "customers" | "sales" | "low_stock" | "transactions">("all")
 
   // [ADDITION 5] State for custom date receipt selection filters
   const [salesTimeframe, setSalesTimeframe] = useState<string>("day")
-
+  const [customValue, setCustomValue] = useState<number>(1)
+  const [receiptHeading, setReceiptHeading] = useState<string>("Daily Sales Receipt")
   const lowStockItems = stock.filter((item) => item.quantity < 3)
   
   // Apply filtering to customers based on query search
@@ -112,26 +113,61 @@ export function AdminDashboard({
       c.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // [ADDITION 5] Date receipt calculation filtering logic
+ // [ADDITION 5] Date receipt calculation filtering logic
   const getFilteredSales = () => {
     const now = new Date()
+    
     return todaySales.filter((sale) => {
       const saleDate = new Date(sale.timestamp)
       if (isNaN(saleDate.getTime())) return true 
-      
-      if (salesTimeframe === "month") {
-        return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear()
-      } else if (salesTimeframe === "year") {
-        return saleDate.getFullYear() === now.getFullYear()
-      } else if (salesTimeframe === "2_years_ago") {
-        return saleDate.getFullYear() === now.getFullYear() - 2
-      } else if (salesTimeframe === "3_months_ago") {
-        const threeMonthsAgo = new Date()
-        threeMonthsAgo.setMonth(now.getMonth() - 3)
-        return saleDate >= threeMonthsAgo
-      } else {
+
+      // 1. Standard Timeframes
+      if (salesTimeframe === "day") {
+        if (receiptHeading !== "Daily Sales Receipt") setReceiptHeading("Daily Sales Receipt")
         return saleDate.toDateString() === now.toDateString()
       }
+      
+      if (salesTimeframe === "month") {
+        if (receiptHeading !== "Monthly Sales Receipt") setReceiptHeading("Monthly Sales Receipt")
+        return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear()
+      }
+      
+      if (salesTimeframe === "year") {
+        if (receiptHeading !== "Yearly Sales Receipt") setReceiptHeading("Yearly Sales Receipt")
+        return saleDate.getFullYear() === now.getFullYear()
+      }
+
+      // 2. Custom Input Options (e.g. 5 Months Ago)
+      const targetValue = customValue || 1
+
+      if (salesTimeframe === "custom_days") {
+        const targetDate = new Date()
+        targetDate.setDate(now.getDate() - targetValue)
+        const dayLabel = targetValue === 1 ? "Day" : "Days"
+        const expectedHeading = `${targetValue} ${dayLabel} Ago Sales Receipt`
+        if (receiptHeading !== expectedHeading) setReceiptHeading(expectedHeading)
+        return saleDate.toDateString() === targetDate.toDateString()
+      }
+
+      if (salesTimeframe === "custom_months") {
+        const targetDate = new Date()
+        targetDate.setMonth(now.getMonth() - targetValue)
+        const monthLabel = targetValue === 1 ? "Month" : "Months"
+        const expectedHeading = `${targetValue} ${monthLabel} Ago Sales Receipt`
+        if (receiptHeading !== expectedHeading) setReceiptHeading(expectedHeading)
+        return saleDate.getMonth() === targetDate.getMonth() && saleDate.getFullYear() === targetDate.getFullYear()
+      }
+
+      if (salesTimeframe === "custom_years") {
+        const targetDate = new Date()
+        targetDate.setFullYear(now.getFullYear() - targetValue)
+        const yearLabel = targetValue === 1 ? "Year" : "Years"
+        const expectedHeading = `${targetValue} ${yearLabel} Ago Sales Receipt`
+        if (receiptHeading !== expectedHeading) setReceiptHeading(expectedHeading)
+        return saleDate.getFullYear() === targetDate.getFullYear()
+      }
+
+      return true
     })
   }
 
@@ -454,17 +490,16 @@ export function AdminDashboard({
             </CardContent>
           </Card>
 
-          {/* Daily Sales Receipt */}
+   {/* Daily Sales Receipt */}
           <Card className={`bg-[#3d5a80] border-[#98c1d9]/30 ${activeStatFilter !== "all" && activeStatFilter !== "sales" && activeStatFilter !== "transactions" ? "ring-2 ring-amber-500" : ""}`}>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <CardTitle className="text-[#e0fbfc] flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Daily Sales Receipt
+                  <CardTitle className="text-[#e0fbfc] flex items-center gap-2 transition-all">
+                    <Calendar className="h-5 w-5 text-[#ee6c4d]" />
+                    {receiptHeading}
                   </CardTitle>
                   <CardDescription className="text-[#98c1d9]">
-                    {/* [ADDITION 5] Fixed current web date display */}
                     {new Date().toLocaleDateString("en-US", {
                       weekday: "long",
                       year: "numeric",
@@ -473,19 +508,34 @@ export function AdminDashboard({
                     })}
                   </CardDescription>
                 </div>
-                {/* [ADDITION 5] Interactive Frame Picker dropdown UI layout alignment */}
-                <Select value={salesTimeframe} onValueChange={(v) => setSalesTimeframe(v)}>
-                  <SelectTrigger className="w-36 h-8 text-xs bg-[#293241] border-[#98c1d9]/30 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#3d5a80] border-[#98c1d9] text-white">
-                    <SelectItem value="day">Today</SelectItem>
-                    <SelectItem value="month">This Month</SelectItem>
-                    <SelectItem value="3_months_ago">3 Months Ago</SelectItem>
-                    <SelectItem value="year">This Year</SelectItem>
-                    <SelectItem value="2_years_ago">2 Years Ago</SelectItem>
-                  </SelectContent>
-                </Select>
+                
+                <div className="flex items-center gap-2">
+                  {/* Dynamic number input box that displays ONLY when choosing "Others" selections */}
+                  {["custom_days", "custom_months", "custom_years"].includes(salesTimeframe) && (
+                    <Input
+                      type="number"
+                      min={1}
+                      value={customValue}
+                      onChange={(e) => setCustomValue(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-16 h-8 text-center bg-[#293241] border-[#98c1d9]/30 text-white font-bold text-xs"
+                    />
+                  )}
+
+                  <Select value={salesTimeframe} onValueChange={(v) => setSalesTimeframe(v)}>
+                    <SelectTrigger className="w-44 h-8 text-xs bg-[#293241] border-[#98c1d9]/30 text-white">
+                      <SelectValue placeholder="Select timeframe" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#3d5a80] border-[#98c1d9] text-white">
+                      <SelectItem value="day">Today</SelectItem>
+                      <SelectItem value="month">This Month</SelectItem>
+                      <SelectItem value="year">This Year</SelectItem>
+                      <hr className="my-1 border-[#98c1d9]/20" />
+                      <SelectItem value="custom_days">Others: Days Ago</SelectItem>
+                      <SelectItem value="custom_months">Others: Months Ago</SelectItem>
+                      <SelectItem value="custom_years">Others: Years Ago</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
