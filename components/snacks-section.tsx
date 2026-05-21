@@ -1,24 +1,27 @@
 "use client"
 
 import Image from "next/image"
-import { ShoppingCart, Plus, Minus, ArrowLeft } from "lucide-react"
+import { ShoppingCart, Plus, Minus, ArrowLeft, Save, Edit } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useState } from "react"
 
 interface SnacksSectionProps {
   onAddToCart: (item: { id: string; name: string; price: number; quantity: number; image: string }) => void
   onBack?: () => void
   isFullPage?: boolean
+  isAdmin?: boolean // Added admin flag prop
 }
 
-const snacks = [
+const initialSnacks = [
   {
     id: "bodbod",
     name: "Bodbod",
     description: "Traditional sticky rice delicacy wrapped in banana leaves",
     price: 10,
-    image: "/images/shakoy.jpg", // Using shakoy as placeholder
+    image: "/images/shakoy.jpg",
     category: "Traditional",
   },
   {
@@ -66,26 +69,25 @@ const snacks = [
   },
 ]
 
-export function SnacksSection({ onAddToCart, onBack, isFullPage = false }: SnacksSectionProps) {
-  // Quantities map initialization to handle specific dynamic changes per item counter seamlessly
+export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin = false }: SnacksSectionProps) {
+  const [itemsList, setItemsList] = useState(initialSnacks)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const updateQuantity = (id: string, delta: number) => {
     setQuantities(prev => {
-      // Establish baseline counter to resolve UI placeholder configuration mismatch errors
       const currentQty = prev[id] !== undefined ? prev[id] : 1
       const targetQty = currentQty + delta
-      return {
-        ...prev,
-        [id]: Math.max(0, targetQty) // Prevents negative numbers entering the transaction stream
-      }
+      return { ...prev, [id]: Math.max(0, targetQty) }
     })
   }
 
-  const handleAddToCart = (snack: typeof snacks[0]) => {
+  const handleInlineItemEdit = (id: string, field: string, val: string | number) => {
+    setItemsList(prev => prev.map(item => item.id === id ? { ...item, [field]: val } : item))
+  }
+
+  const handleAddToCart = (snack: typeof initialSnacks[0]) => {
     const qty = quantities[snack.id] !== undefined ? quantities[snack.id] : 1
-    
-    // Explicit conditional guard checking for empty batch processing runs
     if (qty <= 0) return
 
     onAddToCart({
@@ -96,7 +98,6 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false }: Snack
       image: snack.image,
     })
 
-    // Reset items counter to initial baseline validation state instead of dead zero lockouts
     setQuantities(prev => ({ ...prev, [snack.id]: 1 }))
   }
 
@@ -113,19 +114,22 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false }: Snack
             Back to Home
           </Button>
         )}
+        
         <h2 className="text-3xl font-bold text-[#e0fbfc] text-center mb-2">
           Snacks & Desserts
         </h2>
         <p className="text-[#98c1d9] text-center mb-8">
-          Homemade Filipino treats and sweet desserts
+          Homemade Filipino treats and sweet desserts {isAdmin && <span className="text-yellow-500 font-bold block mt-1 text-xs tracking-wider">🛡️ ADMIN PORTAL ACCESS VERIFIED</span>}
         </p>
 
-        {/* Traditional Snacks Category Grid Layer */}
+        {/* Traditional Snacks Section */}
         <div className="mb-12">
           <h3 className="text-xl font-semibold text-[#98c1d9] mb-4">Traditional Snacks</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {snacks.filter(s => s.category === "Traditional").map((snack) => {
+            {itemsList.filter(s => s.category === "Traditional").map((snack) => {
               const currentItemQty = quantities[snack.id] !== undefined ? quantities[snack.id] : 1
+              const isEditingThis = editingId === snack.id
+
               return (
                 <Card key={snack.id} className="bg-[#3d5a80] border-[#98c1d9]/30 overflow-hidden group">
                   <div className="relative h-48 overflow-hidden">
@@ -135,12 +139,35 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false }: Snack
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                    {isAdmin && (
+                      <Button
+                        size="icon"
+                        className="absolute top-2 right-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-full"
+                        onClick={() => setEditingId(isEditingThis ? null : snack.id)}
+                      >
+                        {isEditingThis ? <Save className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+                      </Button>
+                    )}
                   </div>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-lg font-semibold text-[#e0fbfc]">{snack.name}</h4>
-                      <span className="text-[#ee6c4d] font-bold text-xl">P{snack.price}</span>
-                    </div>
+                  <CardContent className="p-4 space-y-3">
+                    {isEditingThis ? (
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-xs text-[#98c1d9]">Snack Name</Label>
+                          <Input value={snack.name} onChange={(e) => handleInlineItemEdit(snack.id, "name", e.target.value)} className="h-8 bg-[#293241] border-[#98c1d9]/20 text-[#e0fbfc]" />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-[#98c1d9]">Price (₱)</Label>
+                          <Input type="number" value={snack.price} onChange={(e) => handleInlineItemEdit(snack.id, "price", parseInt(e.target.value) || 0)} className="h-8 bg-[#293241] border-[#98c1d9]/20 text-[#e0fbfc]" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-semibold text-[#e0fbfc]">{snack.name}</h4>
+                        <span className="text-[#ee6c4d] font-bold text-xl">P{snack.price}</span>
+                      </div>
+                    )}
+                    
                     <p className="text-sm text-[#98c1d9] mb-4">{snack.description}</p>
                     
                     <div className="flex items-center gap-3">
@@ -181,12 +208,14 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false }: Snack
           </div>
         </div>
 
-        {/* Dessert Tubs Category Grid Layer */}
+        {/* Dessert Tubs Section */}
         <div>
           <h3 className="text-xl font-semibold text-[#98c1d9] mb-4">Dessert Tubs</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {snacks.filter(s => s.category === "Dessert Tub").map((snack) => {
+            {itemsList.filter(s => s.category === "Dessert Tub").map((snack) => {
               const currentItemQty = quantities[snack.id] !== undefined ? quantities[snack.id] : 1
+              const isEditingThis = editingId === snack.id
+
               return (
                 <Card key={snack.id} className="bg-[#3d5a80] border-[#98c1d9]/30 overflow-hidden group">
                   <div className="relative h-48 overflow-hidden">
@@ -196,15 +225,38 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false }: Snack
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute top-2 right-2 bg-[#ee6c4d] text-white text-xs px-2 py-1 rounded font-bold">
-                      {snack.unit}
+                    <div className="absolute top-2 left-12 bg-[#ee6c4d] text-white text-xs px-2 py-1 rounded font-bold">
+                      {snack.unit || "per tub"}
                     </div>
+                    {isAdmin && (
+                      <Button
+                        size="icon"
+                        className="absolute top-2 right-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-full"
+                        onClick={() => setEditingId(isEditingThis ? null : snack.id)}
+                      >
+                        {isEditingThis ? <Save className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+                      </Button>
+                    )}
                   </div>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-lg font-semibold text-[#e0fbfc]">{snack.name}</h4>
-                      <span className="text-[#ee6c4d] font-bold text-xl">P{snack.price}</span>
-                    </div>
+                  <CardContent className="p-4 space-y-3">
+                    {isEditingThis ? (
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-xs text-[#98c1d9]">Snack Name</Label>
+                          <Input value={snack.name} onChange={(e) => handleInlineItemEdit(snack.id, "name", e.target.value)} className="h-8 bg-[#293241] border-[#98c1d9]/20 text-[#e0fbfc]" />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-[#98c1d9]">Price (₱)</Label>
+                          <Input type="number" value={snack.price} onChange={(e) => handleInlineItemEdit(snack.id, "price", parseInt(e.target.value) || 0)} className="h-8 bg-[#293241] border-[#98c1d9]/20 text-[#e0fbfc]" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-semibold text-[#e0fbfc]">{snack.name}</h4>
+                        <span className="text-[#ee6c4d] font-bold text-xl">P{snack.price}</span>
+                      </div>
+                    )}
+                    
                     <p className="text-sm text-[#98c1d9] mb-4">{snack.description}</p>
                     
                     <div className="flex items-center gap-3">

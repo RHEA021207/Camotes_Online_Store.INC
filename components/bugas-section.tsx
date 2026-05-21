@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { ShoppingBasket, Truck, Store, ArrowLeft } from "lucide-react"
+import { ShoppingBasket, Truck, Store, ArrowLeft, Edit2, Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -16,6 +17,7 @@ import {
 
 interface BugasSectionProps {
   freeDeliveryEvent: boolean
+  isAdmin?: boolean // Added admin flag prop
   onAddToCart: (item: { 
     id: string
     name: string
@@ -35,7 +37,6 @@ interface BugasSectionProps {
   isFullPage?: boolean
 }
 
-const pricePerKg = 59.99
 const quantities = [
   { kg: 5, label: "5 kl" },
   { kg: 10, label: "10 kl" },
@@ -50,21 +51,24 @@ const paymentModes = [
   { id: "binuwan", label: "Binuwan (Monthly)" },
 ]
 
-const deliveryFeeBase = 50
-const MONTHLY_INTEREST_RATE = 0.05 // 5% Flat Interest per month from Java logic
-
 export function BugasSection({ 
   freeDeliveryEvent, 
+  isAdmin = false,
   onAddToCart, 
   onAddToTimelineDirectly, 
   onBack, 
   isFullPage = false 
 }: BugasSectionProps) {
+  // Admin-editable state metrics
+  const [pricePerKg, setPricePerKg] = useState<number>(59.99)
+  const [deliveryFeeBase, setDeliveryFeeBase] = useState<number>(50)
+  const [monthlyInterestRate, setMonthlyInterestRate] = useState<number>(0.05) // 5%
+  
   const [selectedQuantity, setSelectedQuantity] = useState<number | null>(null)
   const [deliveryMode, setDeliveryMode] = useState<string>("pickup")
   const [paymentMode, setPaymentMode] = useState<string>("cash")
+  const [isEditingAdmin, setIsEditingAdmin] = useState<boolean>(false)
 
-  // Base raw value before microfinance calculations
   const calculateBasePrincipal = () => {
     if (!selectedQuantity) return 0
     return selectedQuantity * pricePerKg
@@ -76,7 +80,6 @@ export function BugasSection({
     return deliveryFeeBase
   }
 
-  // Java-styled pricing calculations loop rules
   const getCalculatedTerms = () => {
     const principal = calculateBasePrincipal()
     const deliveryFee = getDeliveryFee()
@@ -99,7 +102,7 @@ export function BugasSection({
       labelText = "1 Monthly Term"
     }
 
-    const interestFee = paymentMode !== "cash" ? (principal * MONTHLY_INTEREST_RATE * monthsDuration) : 0
+    const interestFee = paymentMode !== "cash" ? (principal * monthlyInterestRate * monthsDuration) : 0
     const grandTotalAmount = principal + interestFee + deliveryFee
     const installmentPerInstallmentAmount = grandTotalAmount / totalPaymentsCount
 
@@ -112,18 +115,17 @@ export function BugasSection({
     }
   }
 
-  // Microfinance Calendar Math Algorithm
   const getCalculatedDueDate = () => {
     const targetDate = new Date()
     
     if (paymentMode === "cash") {
-      targetDate.setDate(targetDate.getDate() + 1) // Next day collection window
+      targetDate.setDate(targetDate.getDate() + 1)
     } else if (paymentMode === "senimana") {
-      targetDate.setDate(targetDate.getDate() + 7) // Weekly deadline window
+      targetDate.setDate(targetDate.getDate() + 7)
     } else if (paymentMode === "kinsenas") {
-      targetDate.setDate(targetDate.getDate() + 15) // Bi-weekly term window
+      targetDate.setDate(targetDate.getDate() + 15)
     } else if (paymentMode === "binuwan") {
-      targetDate.setMonth(targetDate.getMonth() + 1) // Full calendar month term window
+      targetDate.setMonth(targetDate.getMonth() + 1)
     }
 
     return targetDate.toLocaleDateString("en-US", {
@@ -140,7 +142,6 @@ export function BugasSection({
     const finalDueDate = getCalculatedDueDate()
 
     if (paymentMode === "cash") {
-      // Direct checkout cart injection pipeline
       onAddToCart({
         id: `bugas-${selectedQuantity}kg`,
         name: `Bugas ${selectedQuantity}kl`,
@@ -151,7 +152,6 @@ export function BugasSection({
         paymentMode,
       })
     } else {
-      // Microfinance loop addition to running ledger tracking system lists
       const paymentPlanName = paymentModes.find(m => m.id === paymentMode)?.label || "Installment"
       onAddToTimelineDirectly(
         `🌾 Bugas ${selectedQuantity}kl Plan (${paymentPlanName})`,
@@ -177,6 +177,60 @@ export function BugasSection({
             Back to Home
           </Button>
         )}
+
+        {/* Admin Console Header Section */}
+        {isAdmin && (
+          <div className="max-w-2xl mx-auto mb-6 bg-[#1e2530] border border-yellow-500/40 p-4 rounded-xl">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-xs font-bold text-yellow-500 uppercase tracking-widest flex items-center gap-1">
+                🛡️ Admin Management Dashboard Active
+              </span>
+              <Button 
+                size="sm"
+                variant="outline"
+                className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black"
+                onClick={() => setIsEditingAdmin(!isEditingAdmin)}
+              >
+                {isEditingAdmin ? <Check className="h-4 w-4 mr-1" /> : <Edit2 className="h-3.5 w-3.5 mr-1" />}
+                {isEditingAdmin ? "Lock Rates" : "Modify Store Variables"}
+              </Button>
+            </div>
+            {isEditingAdmin && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div>
+                  <Label className="text-xs text-[#98c1d9]">Price per kg (₱)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={pricePerKg} 
+                    onChange={(e) => setPricePerKg(parseFloat(e.target.value) || 0)}
+                    className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#98c1d9]">Base Delivery Fee (₱)</Label>
+                  <Input 
+                    type="number" 
+                    value={deliveryFeeBase} 
+                    onChange={(e) => setDeliveryFeeBase(parseInt(e.target.value) || 0)}
+                    className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#98c1d9]">Monthly Interest (Decimal Form)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={monthlyInterestRate} 
+                    onChange={(e) => setMonthlyInterestRate(parseFloat(e.target.value) || 0)}
+                    className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center gap-3 justify-center mb-2">
           <ShoppingBasket className="h-8 w-8 text-yellow-400" />
           <h2 className="text-3xl font-bold text-[#e0fbfc]">Bugas (Rice)</h2>
@@ -185,7 +239,7 @@ export function BugasSection({
           Quality rice with flexible payment options
         </p>
         <p className="text-center mb-8">
-          <span className="text-[#ee6c4d] font-bold text-2xl">P{pricePerKg}</span>
+          <span className="text-[#ee6c4d] font-bold text-2xl">P{pricePerKg.toFixed(2)}</span>
           <span className="text-[#98c1d9]">/kg</span>
         </p>
 
@@ -208,6 +262,7 @@ export function BugasSection({
                   {quantities.map((q) => (
                     <button
                       key={q.kg}
+                      type="button"
                       className={`p-4 rounded-lg border-2 transition-all ${
                         selectedQuantity === q.kg
                           ? "border-[#ee6c4d] bg-[#ee6c4d]/20"
@@ -266,7 +321,7 @@ export function BugasSection({
                 </Select>
               </div>
 
-              {/* Dynamic Math Processing Engine Output Display Component Box */}
+              {/* Summary Display */}
               {selectedQuantity && (
                 <div className="bg-[#293241] p-4 rounded-lg space-y-2 border border-[#98c1d9]/10">
                   <p className="text-xs font-bold text-yellow-400 uppercase tracking-widest text-center mb-1">
@@ -278,7 +333,7 @@ export function BugasSection({
                   </div>
                   {paymentMode !== "cash" && (
                     <div className="flex justify-between text-amber-400 text-sm">
-                      <span>Interest Charge Loop (5% flat):</span>
+                      <span>Interest Charge Loop ({(monthlyInterestRate * 100)}% flat):</span>
                       <span>+P{activeTerms.interestFee.toFixed(2)}</span>
                     </div>
                   )}

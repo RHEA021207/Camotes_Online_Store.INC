@@ -17,12 +17,15 @@ import {
   X,
   LogOut,
   DollarSign,
-  Truck
+  Truck,
+  Trash2
 } from "lucide-react"
+import { useServices } from "@/context/ServiceContext" // <-- Wire state sync engine
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -91,11 +94,20 @@ export function AdminDashboard({
   onUpdateStock,
   onLogout,
 }: AdminDashboardProps) {
+  // Pull live state variables directly from Context Engine
+  const { products, updateProduct, addProduct, deleteProduct } = useServices()
+
   const [searchQuery, setSearchQuery] = useState("")
   const [showAddCustomer, setShowAddCustomer] = useState(false)
   const [newCustomer, setNewCustomer] = useState({ name: "", trustScore: "new" as const })
   const [editingStockId, setEditingStockId] = useState<string | null>(null)
   const [editingStockData, setEditingStockData] = useState<Partial<StockItem>>({})
+
+  // Form states for creating a whole new service / category card 
+  const [showAddProductForm, setShowAddProductForm] = useState(false)
+  const [newProdName, setNewProdName] = useState("")
+  const [newProdDesc, setNewProdDesc] = useState("")
+  const [newProdCat, setNewProdCat] = useState<"e-loan" | "bugas" | "snacks" | "gadgets" | "appliances" | "sangla">("snacks")
 
   // Track which metric stat box is clicked/filtered
   const [activeStatFilter, setActiveStatFilter] = useState<"all" | "customers" | "sales" | "low_stock" | "transactions">("all")
@@ -154,6 +166,20 @@ export function AdminDashboard({
     }
   }
 
+  // Handle addition of item inside dynamic service grid matrix
+  const handleCreateNewProduct = () => {
+    if (newProdName.trim() && newProdDesc.trim()) {
+      addProduct({
+        name: newProdName,
+        description: newProdDesc,
+        category: newProdCat
+      })
+      setNewProdName("")
+      setNewProdDesc("")
+      setShowAddProductForm(false)
+    }
+  }
+
   const startEditingStock = (item: StockItem) => {
     setEditingStockId(item.id)
     setEditingStockData({
@@ -191,7 +217,7 @@ export function AdminDashboard({
             <Shield className="h-8 w-8 text-[#98c1d9]" />
             <div>
               <h2 className="text-3xl font-bold text-[#e0fbfc]">Admin Dashboard</h2>
-              <p className="text-[#98c1d9]">Manage customers, inventory, and sales</p>
+              <p className="text-[#98c1d9]">Manage customers, inventory, and storefront services</p>
             </div>
           </div>
           <Button
@@ -342,6 +368,129 @@ export function AdminDashboard({
             </div>
           </CardContent>
         </Card>
+
+        {/* ========================================================================= */}
+        {/* LIVE STOREFRONT BROWSE SERVICES SYSTEM CONTROL BOARD                     */}
+        {/* ========================================================================= */}
+        <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mb-8">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-[#e0fbfc] flex items-center gap-2">
+                  <Package className="h-5 w-5 text-[#ee6c4d]" />
+                  Browse Services Content Editor (Customer View Sync)
+                </CardTitle>
+                <CardDescription className="text-[#98c1d9]">
+                  Edits made here instantly overwrite and update the customer-facing landing modules.
+                </CardDescription>
+              </div>
+              <Button 
+                onClick={() => setShowAddProductForm(!showAddProductForm)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add New Service
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            
+            {/* Create New Dynamic Block Entry Form */}
+            {showAddProductForm && (
+              <div className="bg-[#293241] p-4 rounded-xl border border-emerald-500/30 space-y-3">
+                <p className="text-sm font-bold text-emerald-400">Launch New Service Channel</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[#e0fbfc] text-xs">Product/Service Title</Label>
+                    <Input 
+                      placeholder="e.g., Special Premium Mango Float" 
+                      value={newProdName}
+                      onChange={(e) => setNewProdName(e.target.value)}
+                      className="bg-[#3d5a80] border-[#98c1d9]/20 text-white h-9 mt-1 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#e0fbfc] text-xs">Structural Category Grouping</Label>
+                    <Select value={newProdCat} onValueChange={(v: any) => setNewProdCat(v)}>
+                      <SelectTrigger className="bg-[#3d5a80] border-[#98c1d9]/20 text-white h-9 mt-1 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#293241] text-white">
+                        <SelectItem value="snacks">Snacks / Food Products</SelectItem>
+                        <SelectItem value="gadgets">Gadgets & Phones</SelectItem>
+                        <SelectItem value="e-loan">E-Loan Distribution</SelectItem>
+                        <SelectItem value="bugas">Bugas (Rice Supply)</SelectItem>
+                        <SelectItem value="appliances">Appliances</SelectItem>
+                        <SelectItem value="sangla">Sangla / Prenda Pawn</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[#e0fbfc] text-xs">Storefront Display Description text</Label>
+                  <Textarea 
+                    placeholder="Enter customer info, pricing layouts, tiers, installments..."
+                    value={newProdDesc}
+                    onChange={(e) => setNewProdDesc(e.target.value)}
+                    className="bg-[#3d5a80] border-[#98c1d9]/20 text-white mt-1 text-xs"
+                    rows={2}
+                  />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button size="sm" variant="ghost" className="text-slate-400" onClick={() => setShowAddProductForm(false)}>Cancel</Button>
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCreateNewProduct}>Deploy to App</Button>
+                </div>
+              </div>
+            )}
+
+            {/* Editable Data Table for Landing Page Elements */}
+            <div className="overflow-x-auto border border-[#98c1d9]/10 rounded-xl">
+              <Table>
+                <TableHeader className="bg-[#293241]">
+                  <TableRow className="border-[#98c1d9]/20 hover:bg-transparent">
+                    <TableHead className="text-[#e0fbfc] font-bold w-[20%]">Service Header</TableHead>
+                    <TableHead className="text-[#e0fbfc] font-bold w-[15%]">Category</TableHead>
+                    <TableHead className="text-[#e0fbfc] font-bold w-[50%]">Customer Info Text Description</TableHead>
+                    <TableHead className="text-[#e0fbfc] font-bold text-right w-[15%]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="bg-[#1d2430]/40">
+                  {products.map((prod) => (
+                    <TableRow key={prod.id} className="border-[#98c1d9]/10 hover:bg-[#293241]/30">
+                      <TableCell className="font-bold text-[#e0fbfc] text-xs">
+                        <Input 
+                          value={prod.name}
+                          onChange={(e) => updateProduct(prod.id, { name: e.target.value })}
+                          className="bg-transparent border-none focus-visible:ring-1 focus-visible:ring-[#ee6c4d] p-1 h-7 text-white font-bold"
+                        />
+                      </TableCell>
+                      <TableCell className="text-xs capitalize text-sky-400 font-semibold">
+                        {prod.category}
+                      </TableCell>
+                      <TableCell>
+                        <Input 
+                          value={prod.description}
+                          onChange={(e) => updateProduct(prod.id, { description: e.target.value })}
+                          className="bg-transparent border-none focus-visible:ring-1 focus-visible:ring-[#ee6c4d] p-1 h-7 text-slate-300 text-xs w-full"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => deleteProduct(prod.id)}
+                          className="h-7 w-7 text-rose-400 hover:text-rose-500 hover:bg-rose-500/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+        {/* ========================================================================= */}
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Customer Management */}
@@ -558,7 +707,7 @@ export function AdminDashboard({
             <div className="flex items-center justify-between">
               <CardTitle className="text-[#e0fbfc] flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Inventory Overview
+                Physical Product Inventory Overview
               </CardTitle>
               <p className="text-xs text-[#98c1d9]">Click edit icon to modify items</p>
             </div>
@@ -702,7 +851,8 @@ export function AdminDashboard({
             </div>
           </CardContent>
         </Card>
-{/* Customer Timeline Status Legend */}
+
+        {/* Customer Timeline Status Legend */}
         <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-8">
           <CardHeader>
             <CardTitle className="text-[#e0fbfc]">Timeline Status Legend</CardTitle>
@@ -715,19 +865,11 @@ export function AdminDashboard({
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                <span className="text-sm text-[#e0fbfc]">In Cart</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-400" />
-                <span className="text-sm text-[#e0fbfc]">Overdue (+2% penalty)</span>
+                <span className="text-sm text-[#e0fbfc]">Overdue</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-400" />
-                <span className="text-sm text-[#e0fbfc]">Paid</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-600" />
-                <span className="text-sm text-red-400 font-bold">Not Good</span>
+                <span className="text-sm text-[#e0fbfc]">Fully Paid</span>
               </div>
             </div>
           </CardContent>

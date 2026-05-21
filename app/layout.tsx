@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { ServiceProvider } from '@/context/ServiceContext' // <-- Import the new shared context provider
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -22,7 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-background">
       <body className="font-sans antialiased bg-background text-foreground">
-        {children}
+        {/* Wrap your children in the provider so admin updates can be shared everywhere */}
+        <ServiceProvider>
+          {children}
+        </ServiceProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
