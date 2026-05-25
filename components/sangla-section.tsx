@@ -130,7 +130,7 @@ export function SanglaSection({ onBack, isFullPage = false }: SanglaSectionProps
 
           {/* Secondary Store Navigation Link */}
           <a
-            href="https://maps.google.com/?q=Adela,+Poro,+Camotes,+Cebu"
+            href="https://maps.app.goo.gl/mLWstJ2MiycruaWC9"
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#3d5a80]/60 bg-[#1e2530]/30 text-sm text-[#e0fbfc] hover:text-[#ee6c4d] hover:border-[#ee6c4d]/60 shadow-sm transition-all duration-300"
