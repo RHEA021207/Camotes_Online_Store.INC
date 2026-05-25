@@ -799,16 +799,6 @@ export default function Home() {
         <div className="pt-20 min-h-[calc(100vh-80px)] bg-[#293241] animate-in fade-in duration-300">
           <div className="container mx-auto px-4 pb-16">
             
-            <div className="mb-6">
-              <button
-                onClick={() => handleNavigate("home")}
-                className="inline-flex items-center gap-2 bg-[#1e2530] text-[#e0fbfc] hover:text-white px-5 py-2.5 rounded-xl border border-[#3d5a80] hover:border-[#ee6c4d] transition-all font-bold text-sm shadow-md group"
-              >
-                <span className="transform group-hover:-translate-x-1 transition-transform">←</span> 
-                Back to Home
-              </button>
-            </div>
-            
             {renderContent()}
           </div>
         </div>
