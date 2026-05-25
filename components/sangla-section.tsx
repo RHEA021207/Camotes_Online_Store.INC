@@ -1,6 +1,6 @@
 "use client"
 
-import { Warehouse, AlertTriangle, Smartphone, Tv, Car, Bike, ArrowLeft } from "lucide-react"
+import { Warehouse, AlertTriangle, Smartphone, Tv, Car, Bike, ArrowLeft, MapPin } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -103,20 +103,43 @@ export function SanglaSection({ onBack, isFullPage = false }: SanglaSectionProps
           })}
         </div>
 
-        {/* CTA */}
-        <div className="text-center mt-8">
+        {/* Multi-Channel CTA Unit */}
+        <div className="mt-10 flex flex-col items-center justify-center text-center">
+          {/* Primary Call-to-Action */}
           <a
             href="https://www.facebook.com/share/1BcP1N5D2S/"
             target="_blank"
             rel="noopener noreferrer"
+            className="transform transition-transform active:scale-95"
           >
-            <Button className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white px-8">
+            <Button className="bg-[#ee6c4d] hover:bg-[#d65a31] text-white font-bold px-8 py-6 rounded-xl text-sm shadow-md transition-all">
               Message Us to Get a Quote
             </Button>
           </a>
-          <p className="text-[#98c1d9] text-sm mt-2">
+          
+          <p className="text-[#98c1d9] text-xs mt-2.5">
             Send photos of your item via Facebook Messenger for a quick estimate
           </p>
+
+          {/* Contextual Separator */}
+          <div className="my-4 flex items-center justify-center gap-3 w-full max-w-xs">
+            <div className="h-[1px] bg-[#3d5a80]/40 flex-1" />
+            <span className="text-xs font-bold text-[#98c1d9]/40 tracking-wider uppercase">or</span>
+            <div className="h-[1px] bg-[#3d5a80]/40 flex-1" />
+          </div>
+
+          {/* Secondary Store Navigation Link */}
+          <a
+            href="https://maps.google.com/?q=Adela,+Poro,+Camotes,+Cebu"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#3d5a80]/60 bg-[#1e2530]/30 text-sm text-[#e0fbfc] hover:text-[#ee6c4d] hover:border-[#ee6c4d]/60 shadow-sm transition-all duration-300"
+          >
+            <MapPin className="h-4 w-4 text-[#98c1d9] group-hover:text-[#ee6c4d] transition-colors" />
+            <span className="font-semibold underline underline-offset-4 decoration-[#3d5a80]/60 group-hover:decoration-[#ee6c4d]/60 transition-colors">
+              Visit us at our physical store
+            </span>
+          </a>
         </div>
       </div>
     </section>
