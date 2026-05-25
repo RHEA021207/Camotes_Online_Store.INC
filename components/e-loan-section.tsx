@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Calculator, AlertTriangle, CheckCircle, Lock, ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { supabase } from "@/lib/supabaseClient"
 import {
   Select,
   SelectContent,
@@ -46,6 +47,35 @@ export function ELoanSection({ trustScore, onApplyLoan, onBack, isFullPage = fal
   const [customTermType, setCustomTermType] = useState<"months" | "days">("months")
   const [customTermValue, setCustomTermValue] = useState<string>("")
   const [useCustomTerm, setUseCustomTerm] = useState(false)
+  const [loanAmountsList, setLoanAmountsList] = useState(loanAmounts)
+  const [loading, setLoading] = useState(true)
+
+  // Fetch e-loan service details from Supabase
+  useEffect(() => {
+    const fetchELoanService = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('store_services')
+          .select('*')
+          .eq('category', 'e-loan')
+          .single()
+
+        if (error) {
+          console.error('Error fetching e-loan service:', error)
+        } else if (data) {
+          // You can extend store_services table to include loan amounts
+          // For now, we keep the default loanAmounts
+          console.log('E-loan service fetched:', data)
+        }
+      } catch (err) {
+        console.error('Supabase fetch error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchELoanService()
+  }, [])
 
   const canAccessAmount = (minTrust: string) => {
     if (minTrust === "new") return true
@@ -130,7 +160,7 @@ export function ELoanSection({ trustScore, onApplyLoan, onBack, isFullPage = fal
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                {loanAmounts.map((loan) => {
+                {loanAmountsList.map((loan) => {
                   const isAccessible = canAccessAmount(loan.minTrust)
                   return (
                     <button

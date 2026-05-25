@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabaseClient"
 
 interface SnacksSectionProps {
   onAddToCart: (item: { id: string; name: string; price: number; quantity: number; image: string }) => void
@@ -73,6 +74,45 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin
   const [itemsList, setItemsList] = useState(initialSnacks)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Fetch snacks from Supabase
+  useEffect(() => {
+    const fetchSnacks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('store_services')
+          .select('*')
+          .eq('category', 'snacks')
+
+        if (error) {
+          console.error('Error fetching snacks:', error)
+          setItemsList(initialSnacks)
+        } else if (data && data.length > 0) {
+          // Transform Supabase data to match snack format
+          const transformedSnacks = data.map((item: any) => ({
+            id: item.id?.toString() || item.name.toLowerCase().replace(/\s+/g, '-'),
+            name: item.name,
+            description: item.description || '',
+            price: item.price || 0,
+            image: item.image || '/images/shakoy.jpg',
+            category: item.category_type || 'Traditional',
+            unit: item.unit || 'per item',
+          }))
+          setItemsList(transformedSnacks)
+        } else {
+          setItemsList(initialSnacks)
+        }
+      } catch (err) {
+        console.error('Supabase fetch error:', err)
+        setItemsList(initialSnacks)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSnacks()
+  }, [])
 
   const updateQuantity = (id: string, delta: number) => {
     setQuantities(prev => {

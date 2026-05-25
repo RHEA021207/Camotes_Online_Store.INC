@@ -21,6 +21,7 @@ import {
   Trash2
 } from "lucide-react"
 import { useServices } from "@/context/ServiceContext" // <-- Wire state sync engine
+import { supabase } from "@/lib/supabaseClient"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -167,13 +168,37 @@ export function AdminDashboard({
   }
 
   // Handle addition of item inside dynamic service grid matrix
-  const handleCreateNewProduct = () => {
+  const handleCreateNewProduct = async () => {
     if (newProdName.trim() && newProdDesc.trim()) {
+      // Add to context/localStorage
       addProduct({
         name: newProdName,
         description: newProdDesc,
         category: newProdCat
       })
+      
+      // Save to Supabase store_services table
+      try {
+        const { data, error } = await supabase
+          .from('store_services')
+          .insert([
+            {
+              name: newProdName,
+              description: newProdDesc,
+              category: newProdCat,
+              created_at: new Date().toISOString(),
+            }
+          ])
+        
+        if (error) {
+          console.error('Error saving to Supabase:', error)
+        } else {
+          console.log('Product saved to Supabase:', data)
+        }
+      } catch (err) {
+        console.error('Supabase insert error:', err)
+      }
+      
       setNewProdName("")
       setNewProdDesc("")
       setShowAddProductForm(false)

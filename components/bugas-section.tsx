@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ShoppingBasket, Truck, Store, ArrowLeft, Edit2, Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Input } from "@/components/ui/input"
+import { supabase } from "@/lib/supabaseClient"
 import {
   Select,
   SelectContent,
@@ -63,11 +64,42 @@ export function BugasSection({
   const [pricePerKg, setPricePerKg] = useState<number>(59.99)
   const [deliveryFeeBase, setDeliveryFeeBase] = useState<number>(50)
   const [monthlyInterestRate, setMonthlyInterestRate] = useState<number>(0.05) // 5%
+  const [bugasDescription, setBugasDescription] = useState<string>("")
   
   const [selectedQuantity, setSelectedQuantity] = useState<number | null>(null)
   const [deliveryMode, setDeliveryMode] = useState<string>("pickup")
   const [paymentMode, setPaymentMode] = useState<string>("cash")
   const [isEditingAdmin, setIsEditingAdmin] = useState<boolean>(false)
+  const [loading, setLoading] = useState(true)
+
+  // Fetch bugas service details from Supabase
+  useEffect(() => {
+    const fetchBugasService = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('store_services')
+          .select('*')
+          .eq('category', 'bugas')
+          .single()
+
+        if (error) {
+          console.error('Error fetching bugas service:', error)
+        } else if (data) {
+          // Use service description and details if available
+          if (data.description) {
+            setBugasDescription(data.description)
+          }
+          // Could also update prices from Supabase if you add those fields
+        }
+      } catch (err) {
+        console.error('Supabase fetch error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBugasService()
+  }, [])
 
   const calculateBasePrincipal = () => {
     if (!selectedQuantity) return 0
