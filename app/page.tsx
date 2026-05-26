@@ -11,6 +11,7 @@ import { SanglaSection } from "@/components/sangla-section"
 import { MyTimeline, TimelineItem } from "@/components/my-timeline"
 import { CartSidebar, CartItem } from "@/components/cart-sidebar"
 import { AdminDashboard, Customer, StockItem, SaleItem } from "@/components/admin-dashboard"
+import { supabase } from "@/lib/supabaseClient"
 import { AdminLogin } from "@/components/admin-login"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -128,7 +129,19 @@ export default function Home() {
   const [stock, setStock] = useState<StockItem[]>(initialStock)
   const [sales, setSales] = useState<SaleItem[]>(initialSales)
   const [timeline, setTimeline] = useState<TimelineItem[]>(initialTimeline)
+  const [orders, setOrders] = useState<{
+    id: string
+    type: "purchase" | "loan"
+    name: string
+    amount: number
+    dueDate: string
+    status: "on_the_way" | "delivered" | "completed" | "pending"
+    createdAt: string
+  }[]>([])
   const [freeDeliveryEvent, setFreeDeliveryEvent] = useState(false)
+  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null)
+  const [isCustomerAuthenticated, setIsCustomerAuthenticated] = useState(false)
+  const [visitorShieldMessage, setVisitorShieldMessage] = useState<string>("")
   const [userTrustScore] = useState<"new" | "good" | "excellent">("good")
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false)
@@ -149,9 +162,21 @@ export default function Home() {
     if (authStatus === "true") {
       setIsAdminAuthenticated(true)
     }
+
+    const activeCustomer = sessionStorage.getItem("cos-customer-profile")
+    if (activeCustomer) {
+      const profile = JSON.parse(activeCustomer) as Customer
+      setCurrentCustomer(profile)
+      setIsCustomerAuthenticated(true)
+    }
   }, [])
 
   const servicesRef = useRef<HTMLDivElement>(null)
+
+  const showVisitorShield = (message: string) => {
+    setVisitorShieldMessage(message)
+    window.setTimeout(() => setVisitorShieldMessage(""), 5000)
+  }
 
   const handleNavigate = (section: string) => {
     const normalizedSection = section.toLowerCase().replace(/\s+/g, "-").replace("/", "-")
@@ -192,13 +217,42 @@ export default function Home() {
         setActiveView("appliances")
         break
       case "timeline":
+        if (!isCustomerAuthenticated) {
+          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          return
+        }
         setActiveView("timeline")
         break
       case "admin":
         setActiveView("admin")
         break
       case "cart":
+        if (!isCustomerAuthenticated) {
+          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          return
+        }
         setCartOpen(true)
+        break
+      case "orders":
+        if (!isCustomerAuthenticated) {
+          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          return
+        }
+        setActiveView("orders")
+        break
+      case "account":
+        if (!isCustomerAuthenticated) {
+          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          return
+        }
+        setActiveView("account")
+        break
+      case "settings":
+        if (!isCustomerAuthenticated) {
+          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          return
+        }
+        setActiveView("settings")
         break
       default:
         setActiveView("home")
@@ -211,6 +265,16 @@ export default function Home() {
   }
 
   const handleAddToCart = (item: CartItem) => {
+    if (!isCustomerAuthenticated || !currentCustomer) {
+      showVisitorShield("Please visit our physical store location to register your customer profile account.")
+      return
+    }
+
+    if (currentCustomer.accountStanding === "restricted") {
+      showVisitorShield("Your account is restricted. Please see our staff for assistance.")
+      return
+    }
+
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id)
       if (existing) {

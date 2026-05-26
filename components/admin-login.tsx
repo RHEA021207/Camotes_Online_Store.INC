@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Lock, Eye, EyeOff, Shield } from "lucide-react"
+import { useServices } from "@/context/ServiceContext"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,13 +12,9 @@ interface AdminLoginProps {
   onLogin: (success: boolean) => void
 }
 
-// Demo admin credentials matching core system definitions
-const ADMIN_CREDENTIALS = {
-  username: "admin",
-  password: "cos2022"
-}
-
 export function AdminLogin({ onLogin }: AdminLoginProps) {
+  const { adminCredentials, logAdminLogin } = useServices()
+  
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -32,12 +29,16 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
     // Simulate standard secure authorization delay
     await new Promise(resolve => setTimeout(resolve, 400))
 
-    if (username.trim() === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+    if (username.trim() === adminCredentials.username && password === adminCredentials.password) {
       // Secure local storage token setup
       sessionStorage.setItem("cos-admin-auth", "true")
+      // Log successful admin login to history
+      logAdminLogin(username, "login_success")
       // Execute continuous dynamic interface callback pipe immediately 
       onLogin(true)
     } else {
+      // Log failed admin login attempt to history
+      logAdminLogin(username || "unknown", "login_failed")
       setError("Invalid administrative username or password")
       onLogin(false)
     }
@@ -112,12 +113,6 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
               >
                 {isLoading ? "Authenticating Session..." : "Login to Admin Portal"}
               </Button>
-
-              <div className="text-center pt-4 border-t border-[#98c1d9]/20 mt-4">
-                <p className="text-xs text-[#98c1d9]/60 bg-[#293241]/40 py-2 rounded border border-[#98c1d9]/5">
-                  System Demo Access: <span className="text-[#e0fbfc] font-mono font-bold">admin</span> / <span className="text-[#e0fbfc] font-mono font-bold">cos2022</span>
-                </p>
-              </div>
             </form>
           </CardContent>
         </Card>
