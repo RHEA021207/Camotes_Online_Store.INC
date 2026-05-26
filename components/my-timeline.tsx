@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, ShoppingCart, CreditCard, CheckCircle, AlertTriangle, ArrowLeft } from "lucide-react"
+import { Clock, ShoppingCart, CreditCard, CheckCircle, AlertTriangle, ArrowLeft, Shield } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -10,7 +10,7 @@ export interface TimelineItem {
   name: string
   amount: number
   dueDate: string
-  status: "unpaid" | "in-cart" | "paid" | "overdue"
+  status: "unpaid" | "in-cart" | "pending_review" | "paid" | "overdue"
   penalty?: number
 }
 
@@ -33,6 +33,12 @@ const statusConfig = {
     color: "text-blue-400",
     bgColor: "bg-blue-400/10",
     icon: ShoppingCart,
+  },
+  pending_review: {
+    label: "Pending Admin Review",
+    color: "text-violet-300",
+    bgColor: "bg-violet-400/10",
+    icon: Shield,
   },
   paid: {
     label: "Cleared & Paid",
@@ -100,16 +106,25 @@ export function MyTimeline({ items = [], onPayItem, onBack, isFullPage = false }
           </div>
         </div>
         
-        {(item.status === "unpaid" || item.status === "overdue") && (
+        <div className="mt-3 grid gap-2">
           <Button
             size="sm"
-            className="w-full mt-3 bg-[#ee6c4d] hover:bg-[#ee6c4d]/90 text-white font-bold transition-all border-b-2 border-[#ee6c4d]/40 active:translate-y-[1px]"
-            onClick={() => onPayItem(item.id)}
+            className="w-full bg-[#1d2430] hover:bg-[#1f2e43] text-[#e0fbfc] border border-[#98c1d9]/20"
+            onClick={() => window.open("https://www.facebook.com/share/1BcP1N5D2S/", "_blank")}
           >
-            <CreditCard className="h-4 w-4 mr-2" />
-            Process Electronic Payment
+            Inquire on Facebook
           </Button>
-        )}
+          {(item.status === "unpaid" || item.status === "overdue" || item.status === "pending_review") && (
+            <Button
+              size="sm"
+              className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/90 text-white font-bold transition-all border-b-2 border-[#ee6c4d]/40 active:translate-y-[1px]"
+              onClick={() => onPayItem(item.id)}
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Process Electronic Payment
+            </Button>
+          )}
+        </div>
       </div>
     )
   }

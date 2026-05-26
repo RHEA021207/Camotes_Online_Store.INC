@@ -25,6 +25,7 @@ interface HeaderProps {
 
 export function Header({ onNavigate, cartCount, showBackButton = false, currentSection }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
+  const hideCustomerActions = currentSection === "admin"
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
@@ -182,45 +183,46 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
               )}
             </nav>
             
-            {/* Action Group Container - flex-shrink-0 guarantees it won't squash away */}
-            <div className="flex items-center gap-1 sm:gap-2 border-l border-[#3d5a80] pl-1.5 sm:pl-4 flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#3d5a80] h-9 w-9 flex-shrink-0"
-                onClick={() => onNavigate("cart")}
-              >
-                <ShoppingCart className="h-4 w-4" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[#ee6c4d] text-[10px] font-bold text-white flex items-center justify-center animate-pulse">
-                    {cartCount}
-                  </span>
-                )}
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#3d5a80] h-9 w-9 flex-shrink-0"
-                  >
-                    <User className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[#3d5a80] border-[#98c1d9] w-40 mt-1">
-                  <DropdownMenuItem onClick={() => onNavigate("account")} className="text-[#e0fbfc] font-medium text-xs focus:bg-[#293241] focus:text-[#e0fbfc] cursor-pointer">
-                    My Account
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onNavigate("orders")} className="text-[#e0fbfc] font-medium text-xs focus:bg-[#293241] focus:text-[#e0fbfc] cursor-pointer">
-                    My Orders
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onNavigate("settings")} className="text-[#e0fbfc] font-medium text-xs focus:bg-[#293241] focus:text-[#e0fbfc] cursor-pointer">
-                    Settings
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {!hideCustomerActions && (
+              <div className="flex items-center gap-1 sm:gap-2 border-l border-[#3d5a80] pl-1.5 sm:pl-4 flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#3d5a80] h-9 w-9 flex-shrink-0"
+                  onClick={() => onNavigate("cart")}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[#ee6c4d] text-[10px] font-bold text-white flex items-center justify-center animate-pulse">
+                      {cartCount}
+                    </span>
+                  )}
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#3d5a80] h-9 w-9 flex-shrink-0"
+                    >
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-[#3d5a80] border-[#98c1d9] w-40 mt-1">
+                    <DropdownMenuItem onClick={() => onNavigate("account")} className="text-[#e0fbfc] font-medium text-xs focus:bg-[#293241] focus:text-[#e0fbfc] cursor-pointer">
+                      My Account
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onNavigate("orders")} className="text-[#e0fbfc] font-medium text-xs focus:bg-[#293241] focus:text-[#e0fbfc] cursor-pointer">
+                      My Orders
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onNavigate("settings")} className="text-[#e0fbfc] font-medium text-xs focus:bg-[#293241] focus:text-[#e0fbfc] cursor-pointer">
+                      Settings
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
 
             {/* Mobile Menu Trigger Button */}
             <Button
