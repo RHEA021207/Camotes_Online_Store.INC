@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useServices } from "@/context/ServiceContext"
 import { Calculator, AlertTriangle, CheckCircle, Lock, ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -41,6 +42,7 @@ const loanAmounts = [
 const interestRate = 0.02 // 2% interest rate
 
 export function ELoanSection({ trustScore, onApplyLoan, onBack, isFullPage = false }: ELoanSectionProps) {
+  const { penaltyFeePercentage } = useServices()
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null)
   const [selectedFrequency, setSelectedFrequency] = useState<string>("")
   const [selectedTerm, setSelectedTerm] = useState<number>(3)
@@ -332,7 +334,7 @@ export function ELoanSection({ trustScore, onApplyLoan, onBack, isFullPage = fal
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="h-5 w-5 text-yellow-400 shrink-0 mt-0.5" />
                       <p className="text-sm text-[#98c1d9]">
-                        A 2% penalty fee will be applied automatically if payment exceeds the due date.
+                        A {penaltyFeePercentage}% penalty fee will be applied automatically if payment exceeds the due date.
                       </p>
                     </div>
                   </div>

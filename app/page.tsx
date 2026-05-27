@@ -119,7 +119,7 @@ const initialTimeline: TimelineItem[] = [
   { id: "4", type: "purchase", name: "Mango Float x2", amount: 178, dueDate: "May 05, 2026", status: "paid" },
 ]
 
-type ActiveView = "home" | "services" | "e-loan" | "snacks" | "bugas" | "sangla" | "gadgets" | "appliances" | "timeline" | "admin"
+type ActiveView = "home" | "services" | "e-loan" | "snacks" | "bugas" | "sangla" | "gadgets" | "appliances" | "timeline" | "admin" | "orders" | "account" | "settings"
 
 export default function Home() {
   const [activeView, setActiveView] = useState<ActiveView>("home")
@@ -218,7 +218,7 @@ export default function Home() {
         break
       case "timeline":
         if (!isCustomerAuthenticated) {
-          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          showVisitorShield("Authentication required. Please log in first, or visit our physical store location to register your account credentials.")
           return
         }
         setActiveView("timeline")
@@ -228,28 +228,28 @@ export default function Home() {
         break
       case "cart":
         if (!isCustomerAuthenticated) {
-          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          showVisitorShield("Authentication required. Please log in first, or visit our physical store location to register your account credentials.")
           return
         }
         setCartOpen(true)
         break
       case "orders":
         if (!isCustomerAuthenticated) {
-          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          showVisitorShield("Authentication required. Please log in first, or visit our physical store location to register your account credentials.")
           return
         }
         setActiveView("orders")
         break
       case "account":
         if (!isCustomerAuthenticated) {
-          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          showVisitorShield("Authentication required. Please log in first, or visit our physical store location to register your account credentials.")
           return
         }
         setActiveView("account")
         break
       case "settings":
         if (!isCustomerAuthenticated) {
-          showVisitorShield("Please visit our physical store location to register your customer profile account.")
+          showVisitorShield("Authentication required. Please log in first, or visit our physical store location to register your account credentials.")
           return
         }
         setActiveView("settings")
@@ -270,7 +270,7 @@ export default function Home() {
       return
     }
 
-    if (currentCustomer.accountStanding === "restricted") {
+    if (currentCustomer.standing === "restricted") {
       showVisitorShield("Your account is restricted. Please see our staff for assistance.")
       return
     }
@@ -309,6 +309,14 @@ export default function Home() {
   }
 
   const handleCheckout = () => {
+    if (!isCustomerAuthenticated || !currentCustomer) {
+      showVisitorShield("Authentication required. Please log in first, or visit our physical store location to register your account credentials.")
+      return
+    }
+    if ((currentCustomer as any).standing === "restricted") {
+      showVisitorShield("Your account is restricted. Ordering is temporarily disabled. Please visit our physical store for assistance.")
+      return
+    }
     const newTimelineItems: TimelineItem[] = cart.map((item, index) => ({
       id: `cart-${Date.now()}-${index}`,
       type: "purchase" as const,
@@ -319,9 +327,28 @@ export default function Home() {
         day: "numeric",
         year: "numeric",
       }),
-      status: "unpaid" as const,
+      status: "pending_review" as const,
     }))
     setTimeline((prev) => [...newTimelineItems, ...prev])
+    // Also create lightweight order records for 'My Orders'
+    const newOrders: {
+      id: string
+      type: "purchase" | "loan"
+      name: string
+      amount: number
+      dueDate: string
+      status: "on_the_way" | "delivered" | "completed" | "pending"
+      createdAt: string
+    }[] = newTimelineItems.map((t) => ({
+      id: t.id,
+      type: "purchase",
+      name: t.name,
+      amount: t.amount,
+      dueDate: t.dueDate,
+      status: "on_the_way",
+      createdAt: new Date().toISOString(),
+    }))
+    setOrders((prev) => [...newOrders, ...prev])
     setCart([])
     setCartOpen(false)
     setActiveView("timeline")
@@ -338,7 +365,7 @@ export default function Home() {
         day: "numeric",
         year: "numeric",
       }),
-      status: "unpaid",
+      status: "pending_review",
     }
     setTimeline((prev) => [newLoan, ...prev])
     setActiveView("timeline")
@@ -434,7 +461,7 @@ export default function Home() {
     setFreeDeliveryEvent(value)
   }
 
-  const handleUpdateTrustScore = (customerId: string, score: "new" | "good" | "excellent") => {
+  const handleUpdateTrustScore = (customerId: string, score: "new" | "good" | "excellent" | "not_good") => {
     setCustomers((prev) =>
       prev.map((c) => (c.id === customerId ? { ...c, trustScore: score } : c))
     )
@@ -758,6 +785,63 @@ export default function Home() {
             isFullPage
           />
         )
+      case "orders":
+        return (
+          <section className="py-12 bg-[#293241] min-h-screen">
+            <div className="container mx-auto px-4">
+              <h2 className="text-3xl font-bold text-[#e0fbfc] mb-6">My Orders</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-[#98c1d9] mb-4">On the Way</h3>
+                  <div className="space-y-3">
+                    {orders.filter(o => o.status === 'on_the_way').length === 0 ? (
+                      <div className="p-6 bg-[#3d5a80] rounded text-[#98c1d9]">No active shipments</div>
+                    ) : (
+                      orders.filter(o => o.status === 'on_the_way').map(o => (
+                        <div key={o.id} className="p-4 bg-[#1d2430] rounded border border-[#98c1d9]/10">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-[#e0fbfc] font-medium">{o.name}</p>
+                              <p className="text-xs text-[#98c1d9]">{o.createdAt}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[#ee6c4d] font-bold">P{o.amount.toFixed(2)}</p>
+                              <p className="text-xs text-[#98c1d9]">{o.status}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold text-[#98c1d9] mb-4">Order History</h3>
+                  <div className="space-y-3">
+                    {orders.filter(o => o.status === 'delivered' || o.status === 'completed').length === 0 ? (
+                      <div className="p-6 bg-[#3d5a80] rounded text-[#98c1d9]">No past orders</div>
+                    ) : (
+                      orders.filter(o => o.status === 'delivered' || o.status === 'completed').map(o => (
+                        <div key={o.id} className="p-4 bg-[#1d2430] rounded border border-[#98c1d9]/10">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-[#e0fbfc] font-medium">{o.name}</p>
+                              <p className="text-xs text-[#98c1d9]">{o.createdAt}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[#ee6c4d] font-bold">P{o.amount.toFixed(2)}</p>
+                              <p className="text-xs text-[#98c1d9]">{o.status}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )
       case "admin":
         if (!isAdminAuthenticated) {
           return <AdminLogin onLogin={handleAdminLogin} />
@@ -795,6 +879,17 @@ export default function Home() {
         showBackButton={showBackButton}
         currentSection={activeView}
       />
+      {visitorShieldMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="max-w-lg w-full bg-[#1d2430] border border-[#98c1d9]/20 rounded-lg p-6">
+            <h3 className="text-lg font-bold text-[#e0fbfc] mb-2">Authentication required</h3>
+            <p className="text-sm text-[#98c1d9] mb-4">Authentication required. Please log in first, or visit our physical store location to register your account credentials.</p>
+            <div className="flex justify-end">
+              <button className="bg-[#ee6c4d] text-white px-4 py-2 rounded" onClick={() => setVisitorShieldMessage("")}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {activeView === "home" ? (
         <>

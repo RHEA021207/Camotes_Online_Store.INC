@@ -75,6 +75,8 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [editingId, setEditingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("")
 
   // Fetch snacks from Supabase
   useEffect(() => {
@@ -162,11 +164,21 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin
           Homemade Filipino treats and sweet desserts {isAdmin && <span className="text-yellow-500 font-bold block mt-1 text-xs tracking-wider">🛡️ ADMIN PORTAL ACCESS VERIFIED</span>}
         </p>
 
+        <div className="max-w-2xl mx-auto mb-6 flex gap-2">
+          <Input placeholder="Search snacks..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1 bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]" />
+          <select value={selectedCategoryFilter} onChange={(e) => setSelectedCategoryFilter(e.target.value)} className="bg-[#293241] border border-[#98c1d9]/20 text-[#e0fbfc] px-3 rounded">
+            <option value="">All</option>
+            {[...new Set(itemsList.map(i => i.category))].map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+
         {/* Traditional Snacks Section */}
         <div className="mb-12">
           <h3 className="text-xl font-semibold text-[#98c1d9] mb-4">Traditional Snacks</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {itemsList.filter(s => s.category === "Traditional").map((snack) => {
+            {itemsList.filter(s => (selectedCategoryFilter ? s.category === selectedCategoryFilter : true)).filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).filter(s => s.category === "Traditional").map((snack) => {
               const currentItemQty = quantities[snack.id] !== undefined ? quantities[snack.id] : 1
               const isEditingThis = editingId === snack.id
 

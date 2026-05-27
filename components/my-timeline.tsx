@@ -3,6 +3,7 @@
 import { Clock, ShoppingCart, CreditCard, CheckCircle, AlertTriangle, ArrowLeft, Shield } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useServices } from "@/context/ServiceContext"
 
 export interface TimelineItem {
   id: string
@@ -57,6 +58,7 @@ const statusConfig = {
 export function MyTimeline({ items = [], onPayItem, onBack, isFullPage = false }: MyTimelineProps) {
   // Defensive normalization to prevent runtime application breakdown crashes
   const safeItems = Array.isArray(items) ? items : []
+  const { penaltyFeePercentage } = useServices()
 
   const unpaidItems = safeItems.filter((i) => i.status === "unpaid" || i.status === "overdue")
   const inCartItems = safeItems.filter((i) => i.status === "in-cart")
@@ -93,7 +95,7 @@ export function MyTimeline({ items = [], onPayItem, onBack, isFullPage = false }
               {item.penalty && item.penalty > 0 && (
                 <p className="text-xs text-rose-400 font-medium flex items-center gap-1 mt-1 bg-rose-500/10 px-2 py-0.5 rounded w-fit border border-rose-500/20">
                   <AlertTriangle className="h-3 w-3 shrink-0" />
-                  +P{item.penalty.toFixed(2)} Compounded Penalty Added (2%)
+                  +P{item.penalty.toFixed(2)} Compounded Penalty Added ({penaltyFeePercentage}%)
                 </p>
               )}
             </div>

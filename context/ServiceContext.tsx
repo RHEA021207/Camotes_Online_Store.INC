@@ -7,6 +7,10 @@ export interface ProductItem {
   id: string
   name: string
   description: string
+  price?: number
+  deliveryFee?: number
+  stockStatus?: "available" | "low_stock" | "sold_out" | "out_of_stock"
+  brand?: string
   priceText?: string
   category: "e-loan" | "bugas" | "snacks" | "gadgets" | "appliances" | "sangla" | string
   image?: string
