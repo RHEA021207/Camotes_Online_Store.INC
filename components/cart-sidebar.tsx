@@ -168,7 +168,7 @@ export function CartSidebar({
               className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
               onClick={onCheckout}
             >
-              Proceed to Checkout
+              Request Order via Messenger
             </Button>
           </div>
         )}

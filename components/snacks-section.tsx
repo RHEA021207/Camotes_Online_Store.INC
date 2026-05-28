@@ -14,6 +14,7 @@ interface SnacksSectionProps {
   onBack?: () => void
   isFullPage?: boolean
   isAdmin?: boolean // Added admin flag prop
+  isCustomerAuthenticated?: boolean
 }
 
 const initialSnacks = [
@@ -70,7 +71,7 @@ const initialSnacks = [
   },
 ]
 
-export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin = false }: SnacksSectionProps) {
+export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin = false, isCustomerAuthenticated = false }: SnacksSectionProps) {
   const [itemsList, setItemsList] = useState(initialSnacks)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -246,7 +247,7 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin
                       </div>
                       <Button
                         className="flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white font-bold"
-                        disabled={currentItemQty === 0}
+                        disabled={!isCustomerAuthenticated || currentItemQty === 0}
                         onClick={() => handleAddToCart(snack)}
                       >
                         <ShoppingCart className="h-4 w-4 mr-2" />
@@ -335,7 +336,7 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin
                       </div>
                       <Button
                         className="flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white font-bold"
-                        disabled={currentItemQty === 0}
+                        disabled={!isCustomerAuthenticated || currentItemQty === 0}
                         onClick={() => handleAddToCart(snack)}
                       >
                         <ShoppingCart className="h-4 w-4 mr-2" />

@@ -112,20 +112,10 @@ export function MyTimeline({ items = [], onPayItem, onBack, isFullPage = false }
           <Button
             size="sm"
             className="w-full bg-[#1d2430] hover:bg-[#1f2e43] text-[#e0fbfc] border border-[#98c1d9]/20"
-            onClick={() => window.open("https://www.facebook.com/share/1BcP1N5D2S/", "_blank")}
+            onClick={() => window.open("https://m.me/1BcP1N5D2S", "_blank")}
           >
-            Inquire on Facebook
+            Inquire on Messenger
           </Button>
-          {(item.status === "unpaid" || item.status === "overdue" || item.status === "pending_review") && (
-            <Button
-              size="sm"
-              className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/90 text-white font-bold transition-all border-b-2 border-[#ee6c4d]/40 active:translate-y-[1px]"
-              onClick={() => onPayItem(item.id)}
-            >
-              <CreditCard className="h-4 w-4 mr-2" />
-              Process Electronic Payment
-            </Button>
-          )}
         </div>
       </div>
     )

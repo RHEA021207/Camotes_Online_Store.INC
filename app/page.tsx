@@ -12,6 +12,7 @@ import { MyTimeline, TimelineItem } from "@/components/my-timeline"
 import { CartSidebar, CartItem } from "@/components/cart-sidebar"
 import { AdminDashboard, Customer, StockItem, SaleItem } from "@/components/admin-dashboard"
 import { supabase } from "@/lib/supabaseClient"
+import { CUSTOMER_TABLE } from "@/lib/constants"
 import { AdminLogin } from "@/components/admin-login"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -178,6 +179,34 @@ export default function Home() {
     window.setTimeout(() => setVisitorShieldMessage(""), 5000)
   }
 
+  const messengerPageId = "1BcP1N5D2S"
+
+  const createMessengerLink = (message: string) => {
+    const encodedMessage = encodeURIComponent(message)
+    return `https://m.me/${messengerPageId}?ref=${encodedMessage}`
+  }
+
+  const buildMessengerMessage = (serviceName: string, price: number, deliveryMode?: string) => {
+    const customerName = currentCustomer?.name || "Customer"
+    const deliveryText = deliveryMode ? ` with a delivery mode of ${deliveryMode}` : ""
+    return `Hi! I am logged in as ${customerName} and I want to order/apply for ${serviceName} priced at ₱${price.toFixed(2)}${deliveryText}.`
+  }
+
+  const handleMessengerOrder = (serviceName: string, price: number, deliveryMode?: string) => {
+    if (!isCustomerAuthenticated || !currentCustomer) {
+      showVisitorShield("Please visit our physical store location to register your customer profile account.")
+      return
+    }
+
+    if (currentCustomer.standing === "restricted") {
+      showVisitorShield("Your account is restricted. Please see our staff for assistance.")
+      return
+    }
+
+    const message = buildMessengerMessage(serviceName, price, deliveryMode)
+    window.open(createMessengerLink(message), "_blank")
+  }
+
   const handleNavigate = (section: string) => {
     const normalizedSection = section.toLowerCase().replace(/\s+/g, "-").replace("/", "-")
     
@@ -313,62 +342,40 @@ export default function Home() {
       showVisitorShield("Authentication required. Please log in first, or visit our physical store location to register your account credentials.")
       return
     }
-    if ((currentCustomer as any).standing === "restricted") {
+    if (currentCustomer.standing === "restricted") {
       showVisitorShield("Your account is restricted. Ordering is temporarily disabled. Please visit our physical store for assistance.")
       return
     }
-    const newTimelineItems: TimelineItem[] = cart.map((item, index) => ({
-      id: `cart-${Date.now()}-${index}`,
-      type: "purchase" as const,
-      name: `${item.quantity}x ${item.name}`,
-      amount: item.price * item.quantity + (item.deliveryFee || 0),
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      status: "pending_review" as const,
-    }))
-    setTimeline((prev) => [...newTimelineItems, ...prev])
-    // Also create lightweight order records for 'My Orders'
-    const newOrders: {
-      id: string
-      type: "purchase" | "loan"
-      name: string
-      amount: number
-      dueDate: string
-      status: "on_the_way" | "delivered" | "completed" | "pending"
-      createdAt: string
-    }[] = newTimelineItems.map((t) => ({
-      id: t.id,
-      type: "purchase",
-      name: t.name,
-      amount: t.amount,
-      dueDate: t.dueDate,
-      status: "on_the_way",
-      createdAt: new Date().toISOString(),
-    }))
-    setOrders((prev) => [...newOrders, ...prev])
+
+    if (cart.length === 0) {
+      showVisitorShield("Your cart is empty. Add an item first before proceeding.")
+      return
+    }
+
+    const cartSummary = cart
+      .map((item) => `${item.quantity}x ${item.name}`)
+      .join(", ")
+    const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity + (item.deliveryFee || 0), 0)
+    const message = `Hi! I am logged in as ${currentCustomer.name} and I want to order ${cartSummary} priced at ₱${totalAmount.toFixed(2)}.`
+    window.open(createMessengerLink(message), "_blank")
     setCart([])
     setCartOpen(false)
-    setActiveView("timeline")
   }
 
   const handleApplyLoan = (amount: number, frequency: string, total: number, customDueDate?: string) => {
-    const newLoan: TimelineItem = {
-      id: `loan-${Date.now()}`,
-      type: "loan",
-      name: `E-Loan P${amount.toLocaleString()} (${frequency})`,
-      amount: total,
-      dueDate: customDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      status: "pending_review",
+    if (!isCustomerAuthenticated || !currentCustomer) {
+      showVisitorShield("Authentication required. Please log in first, or visit our physical store location to register your customer profile account.")
+      return
     }
-    setTimeline((prev) => [newLoan, ...prev])
-    setActiveView("timeline")
+    if (currentCustomer.standing === "restricted") {
+      showVisitorShield("Your account is restricted. Ordering is temporarily disabled. Please visit our physical store for assistance.")
+      return
+    }
+
+    const serviceLabel = `E-Loan P${amount.toLocaleString()} (${frequency})`
+    const deliveryText = customDueDate ? ` with due date ${customDueDate}` : ""
+    const message = buildMessengerMessage(serviceLabel, total, deliveryText)
+    window.open(createMessengerLink(message), "_blank")
   }
 
   const handlePayItem = (id: string) => {
@@ -444,12 +451,18 @@ export default function Home() {
 
   const handleProcessInstallmentCheckout = () => {
     if (!selectedModel || processedInstallmentPlan.grandTotal <= 0) return
+    if (!isCustomerAuthenticated || !currentCustomer) {
+      showVisitorShield("Please visit our physical store location to register your customer profile account.")
+      return
+    }
+    if (currentCustomer.standing === "restricted") {
+      showVisitorShield("Your account is restricted. Please see our staff for assistance.")
+      return
+    }
 
-    const targetDueDate = paymentOption === "now" ? "Today" : (processedInstallmentPlan.dateSchedules[0] || "Next Week")
     const paymentModeLabel = paymentOption === "now" ? "Paid Outright" : `${paymentFrequency} Installment Plan`
     const descriptivePlanText = `${selectedBrand} ${selectedModel} (${paymentModeLabel})`
-    
-    handleAddToTimelineDirectly(descriptivePlanText, processedInstallmentPlan.grandTotal, targetDueDate, "purchase")
+    handleMessengerOrder(descriptivePlanText, processedInstallmentPlan.grandTotal)
     
     setSelectedBrand("")
     setSelectedModel("")
@@ -467,12 +480,84 @@ export default function Home() {
     )
   }
 
-  const handleAddCustomer = (customer: Omit<Customer, "id">) => {
+  const handleAddCustomer = async (customer: Omit<Customer, "id">) => {
     const newCustomer: Customer = {
       ...customer,
       id: `COS-${String(customers.length + 101).padStart(3, "0")}`,
     }
+
+    try {
+      const { data, error } = await supabase
+        .from(CUSTOMER_TABLE)
+        .insert([
+          {
+            name: customer.name,
+            phone: customer.phone,
+            username: customer.username,
+            password: customer.password,
+            trust_score: customer.trustScore,
+            standing: customer.standing,
+            balance: customer.balance,
+            last_payment: customer.lastPayment,
+          },
+        ])
+        .select('id')
+        .single()
+
+      if (!error && data && data.id) {
+        newCustomer.id = data.id.toString()
+      }
+    } catch (err) {
+      console.error('Unable to persist new customer to Supabase', err)
+    }
+
     setCustomers((prev) => [...prev, newCustomer])
+  }
+
+  const handleUpdateCustomerStanding = async (customerId: string, standing: "good" | "restricted") => {
+    setCustomers((prev) =>
+      prev.map((c) => (c.id === customerId ? { ...c, standing } : c))
+    )
+    if (currentCustomer?.id === customerId) {
+      setCurrentCustomer({ ...currentCustomer, standing })
+    }
+
+    try {
+      await supabase
+        .from(CUSTOMER_TABLE)
+        .update({ standing })
+        .eq('id', customerId)
+    } catch (err) {
+      console.error('Unable to update customer standing in Supabase', err)
+    }
+  }
+
+  const handleUpdateCustomer = async (customerId: string, updates: Partial<Customer>) => {
+    setCustomers((prev) =>
+      prev.map((c) => (c.id === customerId ? { ...c, ...updates } : c))
+    )
+    if (currentCustomer?.id === customerId) {
+      setCurrentCustomer({ ...currentCustomer, ...updates })
+    }
+
+    const payload: Record<string, any> = {}
+    if (updates.name !== undefined) payload.name = updates.name
+    if (updates.phone !== undefined) payload.phone = updates.phone
+    if (updates.username !== undefined) payload.username = updates.username
+    if (updates.password !== undefined) payload.password = updates.password
+    if (updates.trustScore !== undefined) payload.trust_score = updates.trustScore
+    if (updates.standing !== undefined) payload.standing = updates.standing
+
+    if (Object.keys(payload).length === 0) return
+
+    try {
+      await supabase
+        .from(CUSTOMER_TABLE)
+        .update(payload)
+        .eq('id', customerId)
+    } catch (err) {
+      console.error('Unable to update customer record in Supabase', err)
+    }
   }
 
   const handleUpdateStock = (stockId: string, updates: Partial<StockItem>) => {
@@ -708,10 +793,14 @@ export default function Home() {
                     <Button
                       className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/90 font-bold text-white transition-all shadow-md mt-2"
                       onClick={handleProcessInstallmentCheckout}
+                      disabled={!isCustomerAuthenticated}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
-                      Add to Account Ledger Timeline
+                      {isCustomerAuthenticated ? 'Request via Messenger' : 'Login to request quote'}
                     </Button>
+                    {!isCustomerAuthenticated && (
+                      <p className="mt-2 text-xs text-yellow-300">Log in to request a gadget or appliance quote via Messenger.</p>
+                    )}
                   </CardContent>
                 </Card>
               ) : (
@@ -742,9 +831,10 @@ export default function Home() {
       case "snacks":
         return (
           <SnacksSection 
-            onAddToCart={handleAddToCart} 
+            onAddToCart={(item) => handleMessengerOrder(item.name, item.price)}
             onBack={() => setActiveView("home")}
             isFullPage
+            isCustomerAuthenticated={isCustomerAuthenticated}
           />
         )
       case "bugas":
@@ -752,15 +842,9 @@ export default function Home() {
           <BugasSection
             freeDeliveryEvent={freeDeliveryEvent}
             onAddToCart={(item) =>
-              handleAddToCart({
-                id: item.id,
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                deliveryFee: item.deliveryFee,
-              })
+              handleMessengerOrder(item.name, item.price, item.deliveryMode)
             }
-            onAddToTimelineDirectly={handleAddToTimelineDirectly}
+            onAddToTimelineDirectly={(name, totalAmount) => handleMessengerOrder(name, totalAmount)}
             onBack={() => setActiveView("home")}
             isFullPage
           />
@@ -854,6 +938,8 @@ export default function Home() {
             freeDeliveryEvent={freeDeliveryEvent}
             onToggleFreeDelivery={handleToggleFreeDelivery}
             onUpdateTrustScore={handleUpdateTrustScore}
+            onUpdateCustomerStanding={handleUpdateCustomerStanding}
+            onUpdateCustomer={handleUpdateCustomer}
             onAddCustomer={handleAddCustomer}
             onUpdateStock={handleUpdateStock}
             onLogout={handleAdminLogout}
@@ -1015,11 +1101,19 @@ export default function Home() {
       </footer>
 
       {/* Account Verification Gateway Overlay */}
-      <AccountModal 
+      <AccountModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
-        onLoginSuccess={(mobile: string, name: string) => {
-          console.log("Customer Verified Ledger Context Loaded:", mobile, name)
+        onLoginSuccess={(customer: any) => {
+          // Set active customer session and unlock customer features
+          setCurrentCustomer(customer)
+          setIsCustomerAuthenticated(true)
+          try {
+            sessionStorage.setItem('cos-customer-profile', JSON.stringify(customer))
+          } catch (e) {
+            console.warn('Unable to persist customer session to sessionStorage', e)
+          }
+          setAuthModalOpen(false)
         }}
       />
     </main>

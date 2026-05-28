@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { useServices, type ProductItem } from "@/context/ServiceContext" // <-- Wire state sync engine
 import { supabase } from "@/lib/supabaseClient"
+import { CUSTOMER_TABLE } from "@/lib/constants"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -89,6 +90,7 @@ interface AdminDashboardProps {
   onToggleFreeDelivery: (value: boolean) => void
   onUpdateTrustScore: (customerId: string, score: "new" | "good" | "excellent" | "not_good") => void
   onUpdateCustomerStanding?: (customerId: string, standing: "good" | "restricted") => void
+  onUpdateCustomer?: (customerId: string, updates: Partial<Customer>) => void
   onAddCustomer: (customer: Omit<Customer, "id">) => void
   onUpdateStock?: (stockId: string, updates: Partial<StockItem>) => void
   onLogout: () => void
@@ -102,6 +104,7 @@ export function AdminDashboard({
   onToggleFreeDelivery,
   onUpdateTrustScore,
   onUpdateCustomerStanding,
+  onUpdateCustomer,
   onAddCustomer,
   onUpdateStock,
   onLogout,
@@ -112,6 +115,8 @@ export function AdminDashboard({
   const [searchQuery, setSearchQuery] = useState("")
   const [showAddCustomer, setShowAddCustomer] = useState(false)
   const [newCustomer, setNewCustomer] = useState<{ name: string; phone: string; username: string; password: string; trustScore: "new" | "good" | "excellent" | "not_good"; standing: "good" | "restricted" }>({ name: "", phone: "", username: "", password: "", trustScore: "new", standing: "good" })
+  const [customerEditModalOpen, setCustomerEditModalOpen] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<Partial<Customer> | null>(null)
   const [editingStockId, setEditingStockId] = useState<string | null>(null)
   const [editingStockData, setEditingStockData] = useState<Partial<StockItem>>({})
   
@@ -258,7 +263,8 @@ export function AdminDashboard({
   const selectedCategoryProducts = products.filter((prod) => prod.category === (selectedCategory ?? "snacks"))
   
   // Apply filtering to customers based on query search
-  const filteredCustomers = customers.filter(
+  const safeCustomers = customers || []
+  const filteredCustomers = safeCustomers.filter(
     (c) =>
       c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -305,6 +311,40 @@ export function AdminDashboard({
       balance: 0,
       lastPayment: "N/A",
     })
+
+    // Persist to Supabase customers table
+    ;(async () => {
+      try {
+        // Prevent duplicate username
+        const { data: exists } = await supabase
+          .from(CUSTOMER_TABLE)
+          .select('id')
+          .eq('username', newCustomer.username)
+          .limit(1)
+          .maybeSingle()
+
+        if (exists && (exists as any).id) {
+          console.warn('Customer with this username already exists in Supabase')
+        } else {
+          const payload = {
+            name: newCustomer.name,
+            phone: newCustomer.phone || null,
+            username: newCustomer.username,
+            password: newCustomer.password,
+            trust_score: newCustomer.trustScore,
+            standing: newCustomer.standing,
+            balance: 0,
+            last_payment: 'N/A',
+            created_at: new Date().toISOString(),
+          }
+
+          const { error } = await supabase.from(CUSTOMER_TABLE).insert([payload])
+          if (error) console.error('Failed to insert customer into Supabase:', error)
+        }
+      } catch (err) {
+        console.error('Error persisting customer to Supabase', err)
+      }
+    })()
     setNewCustomer({ name: "", phone: "", username: "", password: "", trustScore: "new", standing: "good" })
     setShowAddCustomer(false)
   }
@@ -531,6 +571,31 @@ export function AdminDashboard({
     }
   }
 
+  const startEditingCustomer = (customer: Customer) => {
+    setEditingCustomer({ ...customer })
+    setCustomerEditModalOpen(true)
+  }
+
+  const saveCustomerEdit = () => {
+    if (editingCustomer?.id && onUpdateCustomer) {
+      onUpdateCustomer(editingCustomer.id, {
+        name: editingCustomer.name,
+        phone: editingCustomer.phone,
+        username: editingCustomer.username,
+        password: editingCustomer.password,
+        trustScore: editingCustomer.trustScore as Customer["trustScore"],
+        standing: editingCustomer.standing as Customer["standing"],
+      })
+    }
+    setCustomerEditModalOpen(false)
+    setEditingCustomer(null)
+  }
+
+  const closeCustomerEdit = () => {
+    setCustomerEditModalOpen(false)
+    setEditingCustomer(null)
+  }
+
   return (
     <section className="py-12 bg-[#293241]" id="admin">
       <div className="container mx-auto px-4">
@@ -647,7 +712,7 @@ export function AdminDashboard({
                       </div>
                       <div>
                         <p className="text-sm text-[#98c1d9]">Total Customers</p>
-                        <p className="text-2xl font-bold text-[#e0fbfc]">{customers.length}</p>
+                        <p className="text-2xl font-bold text-[#e0fbfc]">{safeCustomers.length}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -1071,43 +1136,6 @@ export function AdminDashboard({
 
         {activeTab === 'customers' && (
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Customer Management */}
-          <Card className={`bg-[#3d5a80] border-[#98c1d9]/30 ${activeStatFilter !== "all" && activeStatFilter !== "customers" ? "ring-2 ring-amber-500" : ""}`}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-[#e0fbfc]">Customer Management</CardTitle>
-                  <CardDescription className="text-[#98c1d9]">
-                    Search by ID or name
-                  </CardDescription>
-                </div>
-                <Button
-                  size="sm"
-                  className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
-                  onClick={() => setShowAddCustomer(!showAddCustomer)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-[#98c1d9]">
-                Use the Customer Account Creator below to add new customer profiles and manage account flags.
-              </p>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
-                  <p className="text-xs uppercase tracking-widest text-[#98c1d9]">Total Customers</p>
-                  <p className="text-2xl font-bold text-[#e0fbfc]">{customers.length}</p>
-                </div>
-                <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
-                  <p className="text-xs uppercase tracking-widest text-[#98c1d9]">Restricted Accounts</p>
-                  <p className="text-2xl font-bold text-[#ee6c4d]">{customers.filter((c) => c.standing === "restricted").length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Daily Sales Receipt */}
           <Card className={`bg-[#3d5a80] border-[#98c1d9]/30 ${activeStatFilter !== "all" && activeStatFilter !== "sales" && activeStatFilter !== "transactions" ? "ring-2 ring-amber-500" : ""}`}>
             <CardHeader>
@@ -1230,24 +1258,46 @@ export function AdminDashboard({
         {/* Customer Account Creator */}
         <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-8">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-[#ee6c4d]" />
-                <div>
-                  <CardTitle className="text-[#e0fbfc]">Customer Account Creator</CardTitle>
-                  <CardDescription className="text-[#98c1d9]">
-                    Create and manage customer login profiles from the admin portal.
-                  </CardDescription>
+            <div className="space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-[#ee6c4d]" />
+                  <div>
+                    <CardTitle className="text-[#e0fbfc]">Customer Account Creator</CardTitle>
+                    <CardDescription className="text-[#98c1d9]">
+                      Create and manage customer login profiles from the admin portal.
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
+                  onClick={() => setShowAddCustomer(!showAddCustomer)}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  {showAddCustomer ? "Hide Creator" : "Show Creator"}
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
+                  <p className="text-xs uppercase tracking-widest text-[#98c1d9]">Total Customers</p>
+                  <p className="text-2xl font-bold text-[#e0fbfc]">{safeCustomers.length}</p>
+                </div>
+                <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
+                  <p className="text-xs uppercase tracking-widest text-[#98c1d9]">Restricted Accounts</p>
+                  <p className="text-2xl font-bold text-[#ee6c4d]">{safeCustomers.filter((c) => c.standing === "restricted").length}</p>
+                </div>
+                <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
+                  <Label className="text-xs uppercase tracking-widest text-[#98c1d9] mb-2 block">Search by ID or name</Label>
+                  <Input
+                    placeholder="Search accounts by name or ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-[#1f2b3a] border-[#98c1d9]/20 text-[#e0fbfc]"
+                  />
                 </div>
               </div>
-              <Button
-                size="sm"
-                className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
-                onClick={() => setShowAddCustomer(!showAddCustomer)}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                {showAddCustomer ? "Hide Creator" : "Show Creator"}
-              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1303,16 +1353,6 @@ export function AdminDashboard({
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label className="text-[#e0fbfc] block">Search customer accounts</Label>
-              <Input
-                placeholder="Search accounts by name or ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
-              />
-            </div>
-
             <div className="max-h-96 overflow-y-auto space-y-3">
               {filteredCustomers.length === 0 ? (
                 <div className="p-4 bg-[#1d2430] rounded-lg text-[#98c1d9]">No accounts match the search.</div>
@@ -1329,6 +1369,14 @@ export function AdminDashboard({
                       <p className="text-xs text-[#98c1d9]">{customer.username || "No username set"}</p>
                     </div>
                     <div className="flex items-center gap-3">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-[#98c1d9] hover:text-[#ee6c4d]"
+                        onClick={() => startEditingCustomer(customer)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
                       <div className="flex items-center gap-2">
                         <Switch
                           checked={customer.standing === "good"}
@@ -1345,6 +1393,76 @@ export function AdminDashboard({
             </div>
           </CardContent>
         </Card>
+
+        {customerEditModalOpen && editingCustomer && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="w-full max-w-2xl bg-[#1e2530] border border-[#3d5a80] rounded-3xl p-6 shadow-2xl text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-[#e0fbfc]">Edit Customer Account</h3>
+                  <p className="text-sm text-[#98c1d9]">Update name, contact, login details, or standing flags.</p>
+                </div>
+                <Button variant="ghost" size="icon" className="text-[#98c1d9] hover:text-white" onClick={closeCustomerEdit}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="space-y-2">
+                  <Label className="text-[#e0fbfc]">Full Name</Label>
+                  <Input
+                    value={editingCustomer.name || ""}
+                    onChange={(e) => setEditingCustomer((prev) => prev ? { ...prev, name: e.target.value } : prev)}
+                    className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#e0fbfc]">Phone</Label>
+                  <Input
+                    value={editingCustomer.phone || ""}
+                    onChange={(e) => setEditingCustomer((prev) => prev ? { ...prev, phone: e.target.value } : prev)}
+                    className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#e0fbfc]">Username</Label>
+                  <Input
+                    value={editingCustomer.username || ""}
+                    onChange={(e) => setEditingCustomer((prev) => prev ? { ...prev, username: e.target.value } : prev)}
+                    className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#e0fbfc]">Password</Label>
+                  <Input
+                    type="password"
+                    value={editingCustomer.password || ""}
+                    onChange={(e) => setEditingCustomer((prev) => prev ? { ...prev, password: e.target.value } : prev)}
+                    className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={editingCustomer.standing === "good"}
+                    onCheckedChange={(checked) => setEditingCustomer((prev) => prev ? { ...prev, standing: checked ? "good" : "restricted" } : prev)}
+                  />
+                  <span className="text-sm text-[#e0fbfc]">{editingCustomer.standing === "good" ? "Good Standing" : "Restricted Account"}</span>
+                </div>
+                <div className="flex gap-3">
+                  <Button onClick={closeCustomerEdit} variant="outline" className="text-[#e0fbfc] border-[#98c1d9] hover:bg-[#293241]">
+                    Cancel
+                  </Button>
+                  <Button onClick={saveCustomerEdit} className="bg-[#ee6c4d] hover:bg-[#d65a31] text-white">
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Store Penalty Fee Policy Configuration */}
         <div className="grid lg:grid-cols-1 gap-8 mt-8">

@@ -107,7 +107,7 @@ export function SanglaSection({ onBack, isFullPage = false }: SanglaSectionProps
         <div className="mt-10 flex flex-col items-center justify-center text-center">
           {/* Primary Call-to-Action */}
           <a
-            href="https://www.facebook.com/share/1BcP1N5D2S/"
+            href="https://m.me/1BcP1N5D2S"
             target="_blank"
             rel="noopener noreferrer"
             className="transform transition-transform active:scale-95"
