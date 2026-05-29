@@ -29,7 +29,7 @@ export default function AccountModal({ isOpen, onClose, onLoginSuccess }: Accoun
 
     try {
       const { data, error: qryErr } = await supabase
-        .from(CUSTOMER_TABLE)
+        .from('customers')
         .select('*')
         .eq('username', username.trim())
         .eq('password', password)
