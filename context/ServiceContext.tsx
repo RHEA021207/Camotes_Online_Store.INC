@@ -23,6 +23,7 @@ export interface CategoryConfig {
   minAmount: number
   maxAmount: number
   deliveryFee: number
+  description?: string
   items: CategoryItem[]
   createdAt: string
 }

@@ -59,7 +59,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-[#3d5a80] bg-[#293241]/95 backdrop-blur supports-[backdrop-filter]:bg-[#293241]/80">
+      <header className="sticky top-0 z-50 w-full border-b border-[#3d5a80] bg-[#293241] bg-opacity-95 backdrop-blur supports-[backdrop-filter]:bg-[#293241] supports-[backdrop-filter]:bg-opacity-80">
         {/* Container: Spacing and padding automatically shrink on tight mobiles to prevent crowding */}
         <div className="container mx-auto flex min-h-16 items-center justify-between gap-x-2 px-2 sm:px-4 py-2 md:py-0">
           
@@ -81,14 +81,14 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
     alt="Camotes Online Store"
     width={34}
     height={34}
-    className="rounded-full border border-[#98c1d9]/30 object-cover flex-shrink-0"
+    className="rounded-full border border-[#98c1d9] border-opacity-30 object-cover flex-shrink-0"
   />
   {/* Restored text classes to make sure it shows cleanly on desktop sizes */}
   <div className="hidden md:block lg:block xl:block">
     <p className="text-xs sm:text-sm font-black text-[#e0fbfc] tracking-wide whitespace-nowrap">
       Camotes Online Store
     </p>
-    <p className="text-[10px] sm:text-xs text-[#98c1d9]/80 font-medium whitespace-nowrap">
+    <p className="text-[10px] sm:text-xs text-[#98c1d9] text-opacity-80 font-medium whitespace-nowrap">
       Microfinance Inc.
     </p>
   </div>
@@ -102,7 +102,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
             <Input
               type="search"
               placeholder="Search e-loan, bugas, gadgets, sangla..."
-              className="w-full pl-10 bg-[#3d5a80] border-[#98c1d9] text-[#e0fbfc] placeholder:text-[#98c1d9]/70 h-9 text-xs"
+              className="w-full pl-10 bg-[#3d5a80] border-[#98c1d9] text-[#e0fbfc] placeholder:text-[#98c1d9] plactext-opacity-70 h-9 text-xs"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value)
@@ -118,7 +118,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
             />
             {showSuggestions && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-[#3d5a80] border border-[#98c1d9] rounded-md shadow-lg overflow-hidden z-50">
-                <div className="p-3 border-b border-[#98c1d9]/30">
+                <div className="p-3 border-b border-[#98c1d9] border-opacity-30">
                   <p className="text-xs text-[#98c1d9] mb-2">Quick Search</p>
                   <div className="flex flex-wrap gap-2">
                     {searchSuggestions.map((suggestion) => (
@@ -216,9 +216,6 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
                     <DropdownMenuItem onClick={() => onNavigate("orders")} className="text-[#e0fbfc] font-medium text-xs focus:bg-[#293241] focus:text-[#e0fbfc] cursor-pointer">
                       My Orders
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onNavigate("settings")} className="text-[#e0fbfc] font-medium text-xs focus:bg-[#293241] focus:text-[#e0fbfc] cursor-pointer">
-                      Settings
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -272,7 +269,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
                 ))}
               </div>
             </div>
-            <nav className="flex flex-col border-t border-[#3d5a80]/40">
+            <nav className="flex flex-col border-t border-[#3d5a80] border-opacity-40">
               {showBackButton ? (
                 <button
                   className="px-5 py-3 text-left text-sm font-semibold text-[#e0fbfc] hover:bg-[#3d5a80] flex items-center gap-2 transition-colors"
@@ -287,7 +284,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
               ) : (
                 <>
                   <button
-                    className="px-5 py-3 text-left text-sm font-semibold text-[#e0fbfc] hover:bg-[#3d5a80] transition-colors border-b border-[#3d5a80]/20"
+                    className="px-5 py-3 text-left text-sm font-semibold text-[#e0fbfc] hover:bg-[#3d5a80] transition-colors border-b border-[#3d5a80] border-opacity-20"
                     onClick={() => {
                       onNavigate("timeline")
                       setMobileMenuOpen(false)
@@ -296,7 +293,7 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
                     My Timeline
                   </button>
                   <button
-                    className="px-5 py-3 text-left text-sm font-semibold text-[#e0fbfc] hover:bg-[#3d5a80] transition-colors border-b border-[#3d5a80]/20"
+                    className="px-5 py-3 text-left text-sm font-semibold text-[#e0fbfc] hover:bg-[#3d5a80] transition-colors border-b border-[#3d5a80] border-opacity-20"
                     onClick={() => {
                       onNavigate("cart")
                       setMobileMenuOpen(false)

@@ -120,7 +120,7 @@ const initialTimeline: TimelineItem[] = [
   { id: "4", type: "purchase", name: "Mango Float x2", amount: 178, dueDate: "May 05, 2026", status: "paid" },
 ]
 
-type ActiveView = "home" | "services" | "e-loan" | "snacks" | "bugas" | "sangla" | "gadgets" | "appliances" | "timeline" | "admin" | "orders" | "account" | "settings"
+type ActiveView = "home" | "services" | "e-loan" | "snacks" | "bugas" | "sangla" | "gadgets" | "appliances" | "timeline" | "admin" | "orders" | "account"
 
 export default function Home() {
   const [activeView, setActiveView] = useState<ActiveView>("home")
@@ -275,13 +275,6 @@ export default function Home() {
           return
         }
         setActiveView("account")
-        break
-      case "settings":
-        if (!isCustomerAuthenticated) {
-          showVisitorShield("Authentication required. Please log in first, or visit our physical store location to register your account credentials.")
-          return
-        }
-        setActiveView("settings")
         break
       default:
         setActiveView("home")
@@ -606,7 +599,7 @@ export default function Home() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <Card className="bg-[#3d5a80] border-[#98c1d9]/20 shadow-xl">
+            <Card className="bg-[#3d5a80] border-[#98c1d9] border-opacity-20 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-[#e0fbfc] text-lg flex items-center gap-2">
                   <Layers className="h-5 w-5 text-[#ee6c4d]" />
@@ -625,10 +618,10 @@ export default function Home() {
                       setSelectedPrice(0)
                     }}
                   >
-                    <SelectTrigger className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                    <SelectTrigger className="bg-[#293241] border-[#98c1d9] border-opacity-30 text-[#e0fbfc]">
                       <SelectValue placeholder={category === "gadgets" ? "Choose brand..." : "Choose appliance type..."} />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                    <SelectContent className="bg-[#293241] border-[#98c1d9] border-opacity-30 text-[#e0fbfc]">
                       {availableCategoriesOrBrands.map((b) => (
                         <SelectItem key={b} value={b} className="hover:bg-[#3d5a80] focus:bg-[#3d5a80] text-[#e0fbfc]">{b}</SelectItem>
                       ))}
@@ -647,10 +640,10 @@ export default function Home() {
                         if (matchedRecord) setSelectedPrice(matchedRecord.price)
                       }}
                     >
-                      <SelectTrigger className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                      <SelectTrigger className="bg-[#293241] border-[#98c1d9] border-opacity-30 text-[#e0fbfc]">
                         <SelectValue placeholder="Choose specific design structure..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                      <SelectContent className="bg-[#293241] border-[#98c1d9] border-opacity-30 text-[#e0fbfc]">
                         {database[selectedBrand]?.map((m) => (
                           <SelectItem key={m.model} value={m.model} className="hover:bg-[#3d5a80] focus:bg-[#3d5a80] text-[#e0fbfc]">
                             {m.model} (P{m.price.toLocaleString()})
@@ -662,8 +655,8 @@ export default function Home() {
                 )}
 
                 {selectedPrice > 0 && (
-                  <div className="pt-4 border-t border-[#98c1d9]/20 space-y-4 animate-in fade-in duration-300">
-                    <div className="bg-[#293241]/50 p-3 rounded border border-[#98c1d9]/10">
+                  <div className="pt-4 border-t border-[#98c1d9] border-opacity-20 space-y-4 animate-in fade-in duration-300">
+                    <div className="bg-[#293241] bg-opacity-50 p-3 rounded border border-[#98c1d9] border-opacity-10">
                       <p className="text-xs text-[#98c1d9]">Database Catalog Base Price:</p>
                       <p className="text-2xl font-mono font-bold text-[#ee6c4d]">P{selectedPrice.toLocaleString()}.00</p>
                     </div>
@@ -675,7 +668,7 @@ export default function Home() {
                           type="button"
                           size="sm"
                           variant={paymentOption === "now" ? "default" : "outline"}
-                          className={paymentOption === "now" ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9]/30 text-[#98c1d9] bg-[#293241]"}
+                          className={paymentOption === "now" ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9] border-opacity-30 text-[#98c1d9] bg-[#293241]"}
                           onClick={() => setPaymentOption("now")}
                         >
                           Pay Now (0% Fee)
@@ -684,7 +677,7 @@ export default function Home() {
                           type="button"
                           size="sm"
                           variant={paymentOption === "later" ? "default" : "outline"}
-                          className={paymentOption === "later" ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9]/30 text-[#98c1d9] bg-[#293241]"}
+                          className={paymentOption === "later" ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9] border-opacity-30 text-[#98c1d9] bg-[#293241]"}
                           onClick={() => setPaymentOption("later")}
                         >
                           Pay Later (Micro)
@@ -703,7 +696,7 @@ export default function Home() {
                                 type="button"
                                 size="sm"
                                 variant={paymentFrequency === freq ? "default" : "outline"}
-                                className={paymentFrequency === freq ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9]/30 text-[#98c1d9] bg-[#293241]"}
+                                className={paymentFrequency === freq ? "bg-[#ee6c4d] text-white font-bold" : "border-[#98c1d9] border-opacity-30 text-[#98c1d9] bg-[#293241]"}
                                 onClick={() => setPaymentFrequency(freq)}
                               >
                                 {freq}
@@ -720,13 +713,13 @@ export default function Home() {
                             max={12}
                             value={paymentMonths}
                             onChange={(e) => setPaymentMonths(Math.max(1, parseInt(e.target.value) || 1))}
-                            className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]"
+                            className="bg-[#293241] border-[#98c1d9] border-opacity-30 text-[#e0fbfc]"
                           />
                         </div>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between bg-[#293241]/30 p-2 rounded border border-[#98c1d9]/5">
+                    <div className="flex items-center justify-between bg-[#293241] bg-opacity-30 p-2 rounded border border-[#98c1d9] border-opacity-5">
                       <span className="text-xs text-[#98c1d9] flex items-center gap-1">
                         <Info className="h-3 w-3 text-cyan-400" /> Microfinance Logistics Charge (+P50)
                       </span>
@@ -744,8 +737,8 @@ export default function Home() {
 
             <div>
               {selectedPrice > 0 ? (
-                <Card className="bg-[#3d5a80] border-[#ee6c4d]/40 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                  <div className="bg-gradient-to-r from-[#ee6c4d] to-[#ee6c4d]/80 px-4 py-3">
+                <Card className="bg-[#3d5a80] border-[#ee6c4d] border-opacity-40 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                  <div className="bg-gradient-to-r from-[#ee6c4d] to-[#ee6c4d] to-opacity-80 px-4 py-3">
                     <h3 className="text-white font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
                       <Calendar className="h-4 w-4" /> Amortization Matrix Terminal
                     </h3>
@@ -761,7 +754,7 @@ export default function Home() {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-[#98c1d9]/20">
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-[#98c1d9] border-opacity-20">
                       <div>
                         <span className="text-[#98c1d9]">Interest Fee {paymentOption === "now" ? "(0%)" : "(5% per month)"}:</span>
                         <p className="text-[#e0fbfc] font-mono font-semibold">
@@ -778,7 +771,7 @@ export default function Home() {
                       <span className="text-xs text-[#e0fbfc] font-bold uppercase tracking-wider flex items-center gap-1">
                         🗓️ Generated Calendar Invoices Loop:
                       </span>
-                      <div className="bg-[#293241] rounded border border-[#98c1d9]/10 max-h-40 overflow-y-auto divide-y divide-[#98c1d9]/10">
+                      <div className="bg-[#293241] rounded border border-[#98c1d9] border-opacity-10 max-h-40 overflow-y-auto divide-y divide-[#98c1d9]/10">
                         {processedInstallmentPlan.dateSchedules.map((date, index) => (
                           <div key={index} className="p-2 flex items-center justify-between text-xs font-mono">
                             <span className="text-[#98c1d9]">
@@ -791,7 +784,7 @@ export default function Home() {
                     </div>
 
                     <Button
-                      className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/90 font-bold text-white transition-all shadow-md mt-2"
+                      className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d] hobg-opacity-90 font-bold text-white transition-all shadow-md mt-2"
                       onClick={handleProcessInstallmentCheckout}
                       disabled={!isCustomerAuthenticated}
                     >
@@ -804,7 +797,7 @@ export default function Home() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="bg-[#3d5a80]/30 border-dashed border-[#98c1d9]/30">
+                <Card className="bg-[#3d5a80] bg-opacity-30 border-dashed border-[#98c1d9] border-opacity-30">
                   <CardContent className="py-12 text-center text-[#98c1d9] text-sm">
                     Select a dynamic trademark loop profile above to review active payment matrices.
                   </CardContent>
@@ -882,7 +875,7 @@ export default function Home() {
                       <div className="p-6 bg-[#3d5a80] rounded text-[#98c1d9]">No active shipments</div>
                     ) : (
                       orders.filter(o => o.status === 'on_the_way').map(o => (
-                        <div key={o.id} className="p-4 bg-[#1d2430] rounded border border-[#98c1d9]/10">
+                        <div key={o.id} className="p-4 bg-[#1d2430] rounded border border-[#98c1d9] border-opacity-10">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-[#e0fbfc] font-medium">{o.name}</p>
@@ -906,7 +899,7 @@ export default function Home() {
                       <div className="p-6 bg-[#3d5a80] rounded text-[#98c1d9]">No past orders</div>
                     ) : (
                       orders.filter(o => o.status === 'delivered' || o.status === 'completed').map(o => (
-                        <div key={o.id} className="p-4 bg-[#1d2430] rounded border border-[#98c1d9]/10">
+                        <div key={o.id} className="p-4 bg-[#1d2430] rounded border border-[#98c1d9] border-opacity-10">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-[#e0fbfc] font-medium">{o.name}</p>
@@ -967,7 +960,7 @@ export default function Home() {
       />
       {visitorShieldMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="max-w-lg w-full bg-[#1d2430] border border-[#98c1d9]/20 rounded-lg p-6">
+          <div className="max-w-lg w-full bg-[#1d2430] border border-[#98c1d9] border-opacity-20 rounded-lg p-6">
             <h3 className="text-lg font-bold text-[#e0fbfc] mb-2">Authentication required</h3>
             <p className="text-sm text-[#98c1d9] mb-4">Authentication required. Please log in first, or visit our physical store location to register your account credentials.</p>
             <div className="flex justify-end">
@@ -994,7 +987,7 @@ export default function Home() {
               <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-white tracking-tight drop-shadow-[0_8px_8px_rgba(0,0,0,0.8)]">
                 Hello! How can I help you?
               </h1>
-              <p className="text-[#e0fbfc]/80 font-medium text-sm sm:text-base md:text-lg mt-4 max-w-xl mx-auto drop-shadow-md">
+              <p className="text-[#e0fbfc] text-opacity-80 font-medium text-sm sm:text-base md:text-lg mt-4 max-w-xl mx-auto drop-shadow-md">
                 Your neighborhood digital ledger. Buy now, pay over time. Track every peso (₱) with confidence.
               </p>
 
@@ -1010,7 +1003,7 @@ export default function Home() {
                 
                 <button
                   onClick={() => setAuthModalOpen(true)}
-                  className="bg-[#293241]/90 hover:bg-[#3d5a80] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all transform hover:scale-105 border border-[#3d5a80] flex items-center gap-2"
+                  className="bg-[#293241] bg-opacity-90 hover:bg-[#3d5a80] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all transform hover:scale-105 border border-[#3d5a80] flex items-center gap-2"
                 >
                   <Search className="h-4 w-4 text-[#98c1d9]" />
                   Find My Account
@@ -1026,14 +1019,14 @@ export default function Home() {
               <span className="text-xs text-white/60 font-bold tracking-widest uppercase group-hover:text-white transition-colors duration-300">
                 Browse Services
               </span>
-              <div className="p-2 rounded-full bg-white/5 border border-white/10 group-hover:border-[#ee6c4d]/50 group-hover:bg-white/10 transition-all duration-300">
+              <div className="p-2 rounded-full bg-white/5 border border-white/10 group-hover:border-[#ee6c4d] group-hover:border-opacity-50 group-hover:bg-white/10 transition-all duration-300">
                 <ArrowDown className="h-5 w-5 text-[#ee6c4d] animate-bounce" />
               </div>
             </div>
           </section>
 
           {/* 2. Services Grid Layout */}
-          <div ref={servicesRef} className="bg-[#293241] py-24 border-t border-[#3d5a80]/60">
+          <div ref={servicesRef} className="bg-[#293241] py-24 border-t border-[#3d5a80] border-opacity-60">
             <div className="container mx-auto px-4">
               <ServicesGrid onSelectService={handleNavigate} />
             </div>
@@ -1068,7 +1061,7 @@ export default function Home() {
           </p>
           
           {/* Secondary Verification Subtitle */}
-          <p className="text-xs text-[#98c1d9]/70 font-normal">
+          <p className="text-xs text-[#98c1d9] text-opacity-70 font-normal">
             DTI Registered | Business Permit | Since 2022
           </p>
           
@@ -1078,10 +1071,10 @@ export default function Home() {
               href="https://maps.app.goo.gl/Uszepx1VXhfvWNkh7" 
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-[#98c1d9]/70 hover:text-[#ee6c4d] transition-colors duration-200 group"
+              className="inline-flex items-center gap-1.5 text-xs text-[#98c1d9] text-opacity-70 hover:text-[#ee6c4d] transition-colors duration-200 group"
             >
               {/* MapPin / Navigation Marker Icon Component */}
-              <MapPin className="h-3.5 w-3.5 text-[#98c1d9]/70 group-hover:text-[#ee6c4d] transition-colors" />
+              <MapPin className="h-3.5 w-3.5 text-[#98c1d9] text-opacity-70 group-hover:text-[#ee6c4d] transition-colors" />
               <span>Adela, Poro, Camotes, Cebu</span>
             </a>
           </div>

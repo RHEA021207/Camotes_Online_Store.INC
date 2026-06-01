@@ -25,7 +25,7 @@ import {
   Zap,
   Tag
 } from "lucide-react"
-import { useServices, type ProductItem } from "@/context/ServiceContext" // <-- Wire state sync engine
+import { useServices, type ProductItem, type CategoryConfig, type CategoryItem } from "@/context/ServiceContext" // <-- Wire state sync engine
 import { supabase } from "@/lib/supabaseClient"
 import { CUSTOMER_TABLE } from "@/lib/constants"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -136,10 +136,11 @@ export function AdminDashboard({
   // Category management state
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryConfigs[0]?.categoryKey || "e-loan")
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
-  const [editingCategoryData, setEditingCategoryData] = useState<any>(null)
+  const [editingCategoryData, setEditingCategoryData] = useState<Partial<CategoryConfig> | null>(null)
   const [addingNewCategoryItem, setAddingNewCategoryItem] = useState(false)
   const [newItemName, setNewItemName] = useState("")
   const [newItemAmount, setNewItemAmount] = useState(0)
+  const [newItemDescription, setNewItemDescription] = useState("")
 
   // Form states for creating a whole new service / category card 
   const [showAddProductForm, setShowAddProductForm] = useState(true)
@@ -227,10 +228,11 @@ export function AdminDashboard({
 
   const handleAddCategoryItem = () => {
     if (editingCategoryData && newItemName.trim() && newItemAmount > 0) {
-      const newItem = {
+      const newItem: CategoryItem = {
         id: crypto.randomUUID(),
         name: newItemName,
         amount: newItemAmount,
+        description: newItemDescription.trim() || undefined,
       }
       setEditingCategoryData({
         ...editingCategoryData,
@@ -238,6 +240,7 @@ export function AdminDashboard({
       })
       setNewItemName("")
       setNewItemAmount(0)
+      setNewItemDescription("")
       setAddingNewCategoryItem(false)
     }
   }
@@ -246,9 +249,19 @@ export function AdminDashboard({
     if (editingCategoryData) {
       setEditingCategoryData({
         ...editingCategoryData,
-        items: editingCategoryData.items.filter((item: any) => item.id !== itemId),
+        items: (editingCategoryData.items || []).filter((item: any) => item.id !== itemId),
       })
     }
+  }
+
+  const handleCategoryItemChange = (itemId: string, field: keyof CategoryItem, value: string | number | undefined) => {
+    if (!editingCategoryData) return
+    setEditingCategoryData({
+      ...editingCategoryData,
+      items: (editingCategoryData.items || []).map((item: any) =>
+        item.id === itemId ? { ...item, [field]: value } : item
+      ),
+    })
   }
 
   const currentCategory = categoryConfigs.find((c) => c.categoryKey === selectedCategory)
@@ -264,7 +277,7 @@ export function AdminDashboard({
   
   // Apply filtering to customers based on query search
   const safeCustomers = customers || []
-  const filteredCustomers = safeCustomers.filter(
+ const filteredCustomers = safeCustomers.filter(
     (c) =>
       c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -824,7 +837,7 @@ export function AdminDashboard({
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-[1.7fr_1fr] gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <div className="space-y-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                   {categoryConfigs.map((cat) => (
@@ -861,7 +874,7 @@ export function AdminDashboard({
                   </div>
 
                   {currentCategory && editingCategoryId === selectedCategory && editingCategoryData ? (
-                    <div className="mt-5 space-y-4 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4">
+                    <div className="mt-5 space-y-6 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4">
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         <div>
                           <Label className="text-[#98c1d9] text-xs">Service Name</Label>
@@ -910,12 +923,125 @@ export function AdminDashboard({
                           />
                         </div>
                       </div>
+
+                      <div className="rounded-3xl border border-[#98c1d9]/20 bg-[#293241] p-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+                          <div>
+                            <p className="text-sm font-semibold text-[#e0fbfc]">Category Item Manager</p>
+                            <p className="text-xs text-[#98c1d9]">Edit, delete, or add specific sub-products for this category.</p>
+                          </div>
+                          <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white" onClick={() => setAddingNewCategoryItem((prev) => !prev)}>
+                            <Plus className="h-4 w-4 mr-1" /> {addingNewCategoryItem ? 'Hide New Item Form' : '＋ Add New Item'}
+                          </Button>
+                        </div>
+
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-[#98c1d9]">Item Name</TableHead>
+                              <TableHead className="text-[#98c1d9]">Price / Rate</TableHead>
+                              <TableHead className="text-[#98c1d9]">Unit / Description</TableHead>
+                              <TableHead className="text-[#98c1d9]">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {(editingCategoryData.items || []).length > 0 ? (
+                              (editingCategoryData.items || []).map((item: any) => (
+                                <TableRow key={item.id || item.name} className="border-t border-[#98c1d9]/10">
+                                  <TableCell className="p-2">
+                                    <Input
+                                      value={item.name || ''}
+                                      onChange={(e) => handleCategoryItemChange(item.id, 'name', e.target.value)}
+                                      className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
+                                      placeholder="Item name"
+                                    />
+                                  </TableCell>
+                                  <TableCell className="p-2">
+                                    <Input
+                                      type="number"
+                                      value={item.amount ?? ''}
+                                      onChange={(e) => handleCategoryItemChange(item.id, 'amount', parseInt(e.target.value) || 0)}
+                                      className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
+                                      placeholder="Price"
+                                    />
+                                  </TableCell>
+                                  <TableCell className="p-2">
+                                    <Input
+                                      value={item.description || ''}
+                                      onChange={(e) => handleCategoryItemChange(item.id, 'description', e.target.value)}
+                                      className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
+                                      placeholder="Unit or description"
+                                    />
+                                  </TableCell>
+                                  <TableCell className="p-2 text-right">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="text-[#ee6c4d] hover:text-red-400"
+                                      onClick={() => handleRemoveCategoryItem(item.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={4} className="py-6 text-center text-sm text-[#98c1d9]">
+                                  No category items yet. Add a new item to expand this catalog.
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+
+                        {addingNewCategoryItem && (
+                          <div className="mt-4 space-y-3">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                              <div>
+                                <Label className="text-[#98c1d9] text-xs">New Item Name</Label>
+                                <Input
+                                  value={newItemName}
+                                  onChange={(e) => setNewItemName(e.target.value)}
+                                  className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
+                                  placeholder="e.g. Wash & Fold"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[#98c1d9] text-xs">Price / Rate</Label>
+                                <Input
+                                  type="number"
+                                  value={newItemAmount}
+                                  onChange={(e) => setNewItemAmount(Number(e.target.value))}
+                                  className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
+                                  placeholder="e.g. 150"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[#98c1d9] text-xs">Unit / Description</Label>
+                                <Input
+                                  value={newItemDescription}
+                                  onChange={(e) => setNewItemDescription(e.target.value)}
+                                  className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
+                                  placeholder="e.g. per kg"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex justify-end">
+                              <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white" onClick={handleAddCategoryItem}>
+                                <Plus className="h-4 w-4 mr-1" /> Add Item
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex justify-end gap-2">
                         <Button size="sm" variant="outline" className="text-slate-400" onClick={() => setEditingCategoryId(null)}>
                           Cancel
                         </Button>
                         <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white" onClick={handleSaveCategory}>
-                          <Check className="h-4 w-4 mr-1" /> Save Header
+                          <Check className="h-4 w-4 mr-1" /> Save Changes
                         </Button>
                       </div>
                     </div>
@@ -1066,68 +1192,6 @@ export function AdminDashboard({
                 )}
               </div>
 
-              <div className="space-y-4">
-                <div className="rounded-3xl border border-[#98c1d9]/20 bg-[#293241] p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-[#98c1d9]">Category Inventory</p>
-                      <h4 className="text-lg font-semibold text-[#e0fbfc]">{categoryLabels[selectedCategory ?? 'snacks'] || 'Selected Category'}</h4>
-                    </div>
-                    <span className="text-sm text-[#98c1d9]">{selectedCategoryProducts.length} item(s)</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {selectedCategoryProducts.length === 0 ? (
-                    <div className="col-span-full rounded-3xl border border-[#98c1d9]/20 bg-[#1d2430] p-8 text-center text-[#98c1d9]">
-                      No products found in this category. Add one using the form above.
-                    </div>
-                  ) : (
-                    selectedCategoryProducts.map((prod) => (
-                      <div key={prod.id} className="group overflow-hidden rounded-[28px] border border-[#98c1d9]/20 bg-[#1d2430] shadow-xl shadow-black/10">
-                        <div className="relative h-48 bg-[#212a35]">
-                          {prod.image ? (
-                            <img src={prod.image} alt={prod.name} className="h-full w-full object-cover transition duration-200 group-hover:scale-105" />
-                          ) : (
-                            <div className="flex h-full items-center justify-center text-[#98c1d9]">No image</div>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleEditProduct(prod)}
-                            className="absolute right-3 top-3 rounded-full bg-black/60 p-2 text-[#e0fbfc] transition hover:bg-[#ee6c4d] hover:text-black"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <div className="p-5">
-                          <div className="flex items-center justify-between gap-2">
-                            <h5 className="text-base font-semibold text-[#e0fbfc]">{prod.name}</h5>
-                            <span className={`rounded-full px-2 py-1 text-[11px] font-bold uppercase ${prod.stockStatus === 'sold_out' ? 'bg-red-500/15 text-red-300' : prod.stockStatus === 'low_stock' ? 'bg-yellow-500/15 text-yellow-300' : 'bg-emerald-500/15 text-emerald-300'}`}>
-                              {prod.stockStatus === 'sold_out' ? 'Sold Out' : prod.stockStatus === 'low_stock' ? 'Low Stock' : 'Available'}
-                            </span>
-                          </div>
-                          <p className="mt-3 text-sm leading-6 text-[#98c1d9]">{prod.description}</p>
-                          <div className="mt-4 grid gap-2 text-sm text-[#d9e2ec]">
-                            <div className="flex items-center justify-between rounded-xl bg-[#293241] p-3">
-                              <span>Price</span>
-                              <span className="font-semibold text-[#ee6c4d]">P{prod.price?.toFixed(2) ?? '0.00'}</span>
-                            </div>
-                            <div className="flex items-center justify-between rounded-xl bg-[#293241] p-3">
-                              <span>Delivery</span>
-                              <span>{prod.deliveryFee ? `P${prod.deliveryFee.toFixed(2)}` : 'None'}</span>
-                            </div>
-                            {prod.brand && (
-                              <div className="flex items-center justify-between rounded-xl bg-[#293241] p-3">
-                                <span>Brand</span>
-                                <span className="text-[#e0fbfc]">{prod.brand}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
