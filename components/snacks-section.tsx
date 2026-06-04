@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabaseClient"
 
 interface SnacksSectionProps {
   onAddToCart: (item: { id: string; name: string; price: number; quantity: number; image: string }) => void
+  onInquire: () => void
   onBack?: () => void
   isFullPage?: boolean
   isAdmin?: boolean // Added admin flag prop
@@ -71,7 +72,7 @@ const initialSnacks = [
   },
 ]
 
-export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin = false, isCustomerAuthenticated = false }: SnacksSectionProps) {
+export function SnacksSection({ onAddToCart, onInquire, onBack, isFullPage = false, isAdmin = false, isCustomerAuthenticated = false }: SnacksSectionProps) {
   const [itemsList, setItemsList] = useState(initialSnacks)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -223,7 +224,7 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin
                     
                     <p className="text-sm text-[#98c1d9] mb-4">{snack.description}</p>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2 bg-[#293241] rounded-lg">
                         <Button
                           variant="ghost"
@@ -245,14 +246,23 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
-                      <Button
-                        className="flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white font-bold"
-                        disabled={!isCustomerAuthenticated || currentItemQty === 0}
-                        onClick={() => handleAddToCart(snack)}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        Add To Cart
-                      </Button>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-1">
+                        <Button
+                          className="w-full sm:flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white font-bold"
+                          disabled={!isCustomerAuthenticated || currentItemQty === 0}
+                          onClick={() => handleAddToCart(snack)}
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          Add To Cart
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full sm:flex-1 text-[#e0fbfc] border-[#98c1d9] hover:bg-[#293241]"
+                          onClick={onInquire}
+                        >
+                          Inquire Right Away
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -312,7 +322,7 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin
                     
                     <p className="text-sm text-[#98c1d9] mb-4">{snack.description}</p>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2 bg-[#293241] rounded-lg">
                         <Button
                           variant="ghost"
@@ -334,14 +344,23 @@ export function SnacksSection({ onAddToCart, onBack, isFullPage = false, isAdmin
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
-                      <Button
-                        className="flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white font-bold"
-                        disabled={!isCustomerAuthenticated || currentItemQty === 0}
-                        onClick={() => handleAddToCart(snack)}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        Add To Cart
-                      </Button>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-1">
+                        <Button
+                          className="w-full sm:flex-1 bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white font-bold"
+                          disabled={!isCustomerAuthenticated || currentItemQty === 0}
+                          onClick={() => handleAddToCart(snack)}
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          Add To Cart
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full sm:flex-1 text-[#e0fbfc] border-[#98c1d9] hover:bg-[#293241]"
+                          onClick={onInquire}
+                        >
+                          Inquire Right Away
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

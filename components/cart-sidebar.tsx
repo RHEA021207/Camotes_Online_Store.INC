@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { X, Trash2, ShoppingCart, Minus, Plus } from "lucide-react"
+import { X, Trash2, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -18,8 +18,8 @@ interface CartSidebarProps {
   isOpen: boolean
   onClose: () => void
   items: CartItem[]
-  onUpdateQuantity: (id: string, quantity: number) => void
   onRemoveItem: (id: string) => void
+  onInquireItem: (id: string) => void
   onCheckout: () => void
 }
 
@@ -27,8 +27,8 @@ export function CartSidebar({
   isOpen,
   onClose,
   items,
-  onUpdateQuantity,
   onRemoveItem,
+  onInquireItem,
   onCheckout,
 }: CartSidebarProps) {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -115,27 +115,24 @@ export function CartSidebar({
                           +P{item.deliveryFee} delivery
                         </p>
                       )}
-                      <div className="flex items-center gap-2 mt-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#293241]"
-                          onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-6 text-center text-[#e0fbfc] text-sm">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#293241]"
-                          onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
+                      <div className="flex items-center justify-between gap-2 mt-3">
+                        <span className="text-sm text-[#98c1d9]">Qty: {item.quantity}</span>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            className="text-[#e0fbfc] border-[#98c1d9] hover:bg-[#293241]"
+                            onClick={() => onInquireItem(item.id)}
+                          >
+                            Inquire
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            className="text-white"
+                            onClick={() => onRemoveItem(item.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>

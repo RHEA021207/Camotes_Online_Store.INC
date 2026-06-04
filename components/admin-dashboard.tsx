@@ -132,6 +132,7 @@ export function AdminDashboard({
   const [editingPenaltyFee, setEditingPenaltyFee] = useState(false)
   const [tempPenaltyFee, setTempPenaltyFee] = useState(penaltyFeePercentage)
   const [activeTab, setActiveTab] = useState<"overview"|"inventory"|"customers"|"policies">("overview")
+  const [activeStatFilter, setActiveStatFilter] = useState("all")
 
   // Category management state
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryConfigs[0]?.categoryKey || "e-loan")
@@ -144,129 +145,7 @@ export function AdminDashboard({
 
   // Form states for creating a whole new service / category card 
   const [showAddProductForm, setShowAddProductForm] = useState(true)
-  const [newProdName, setNewProdName] = useState("")
-  const [newProdDesc, setNewProdDesc] = useState("")
-  const [newProdCat, setNewProdCat] = useState<"e-loan" | "bugas" | "snacks" | "gadgets" | "appliances" | "sangla">("snacks")
-  const [newProdImageFile, setNewProdImageFile] = useState<File | null>(null)
-  const [newProdImagePreview, setNewProdImagePreview] = useState<string>("")
-  useEffect(() => {
-    if (selectedCategory) {
-      setNewProdCat(selectedCategory as "e-loan" | "bugas" | "snacks" | "gadgets" | "appliances" | "sangla")
-    }
-  }, [selectedCategory])
-  const [newProdPrice, setNewProdPrice] = useState<number>(0)
-  const [newProdDeliveryFee, setNewProdDeliveryFee] = useState<number>(0)
-  const [newProdStockStatus, setNewProdStockStatus] = useState<"available" | "low_stock" | "sold_out" | "out_of_stock">("available")
-  const [newProdBrand, setNewProdBrand] = useState<string>("")
-  const [editingProductId, setEditingProductId] = useState<string | null>(null)
-  const [draggingNewImage, setDraggingNewImage] = useState(false)
-  const [uploadingProductId, setUploadingProductId] = useState<string | null>(null)
-  const [imageUploadError, setImageUploadError] = useState<string>("")
-
-  // Track which metric stat box is clicked/filtered
-  const [activeStatFilter, setActiveStatFilter] = useState<"all" | "customers" | "sales" | "low_stock" | "transactions">("all")
-
-  // State for custom date receipt selection filters
-  const [salesTimeframe, setSalesTimeframe] = useState<string>("day")
-  const [customValue, setCustomValue] = useState<number>(1)
-  const [customUnit, setCustomUnit] = useState<string>("days")
-  const [receiptHeading, setReceiptHeading] = useState<string>("Daily Sales Receipt")
-  
-  const lowStockItems = stock.filter((item) => item.quantity < 3)
-  
-  // Handler for saving admin account settings
-  const handleSaveAdminSettings = () => {
-    setAdminSettingsError("")
-    setAdminSettingsSuccess(false)
-
-    if (!adminUsername.trim()) {
-      setAdminSettingsError("Username cannot be empty")
-      return
-    }
-
-    if (!adminPassword || adminPassword.length < 4) {
-      setAdminSettingsError("Password must be at least 4 characters")
-      return
-    }
-
-    if (adminPassword !== adminPasswordConfirm) {
-      setAdminSettingsError("Passwords do not match")
-      return
-    }
-
-    // Update the admin credentials
-    updateAdminCredentials(adminUsername, adminPassword)
-    setAdminSettingsSuccess(true)
-    setTimeout(() => {
-      setShowAdminSettings(false)
-      setAdminSettingsSuccess(false)
-    }, 2000)
-  }
-
-  // Handler for saving penalty fee
-  const handleSavePenaltyFee = () => {
-    setPenaltyFeePercentage(tempPenaltyFee)
-    setEditingPenaltyFee(false)
-  }
-
-  // Category management handlers
-  const handleEditCategory = (categoryKey: string) => {
-    const category = categoryConfigs.find((c) => c.categoryKey === categoryKey)
-    if (category) {
-      setEditingCategoryId(categoryKey)
-      setEditingCategoryData({ ...category })
-    }
-  }
-
-  const handleSaveCategory = () => {
-    if (editingCategoryData && selectedCategory) {
-      updateCategoryConfig(selectedCategory, editingCategoryData)
-      setEditingCategoryId(null)
-      setEditingCategoryData(null)
-    }
-  }
-
-  const handleAddCategoryItem = () => {
-    if (editingCategoryData && newItemName.trim() && newItemAmount > 0) {
-      const newItem: CategoryItem = {
-        id: crypto.randomUUID(),
-        name: newItemName,
-        amount: newItemAmount,
-        description: newItemDescription.trim() || undefined,
-      }
-      setEditingCategoryData({
-        ...editingCategoryData,
-        items: [...(editingCategoryData.items || []), newItem],
-      })
-      setNewItemName("")
-      setNewItemAmount(0)
-      setNewItemDescription("")
-      setAddingNewCategoryItem(false)
-    }
-  }
-
-  const handleRemoveCategoryItem = (itemId: string) => {
-    if (editingCategoryData) {
-      setEditingCategoryData({
-        ...editingCategoryData,
-        items: (editingCategoryData.items || []).filter((item: any) => item.id !== itemId),
-      })
-    }
-  }
-
-  const handleCategoryItemChange = (itemId: string, field: keyof CategoryItem, value: string | number | undefined) => {
-    if (!editingCategoryData) return
-    setEditingCategoryData({
-      ...editingCategoryData,
-      items: (editingCategoryData.items || []).map((item: any) =>
-        item.id === itemId ? { ...item, [field]: value } : item
-      ),
-    })
-  }
-
-  const currentCategory = categoryConfigs.find((c) => c.categoryKey === selectedCategory)
   const categoryLabels: Record<string, string> = {
-    "e-loan": "Eloan",
     bugas: "Bugas",
     snacks: "Snacks",
     gadgets: "Gadgets",
@@ -274,6 +153,9 @@ export function AdminDashboard({
     sangla: "Sangla",
   }
   const selectedCategoryProducts = products.filter((prod) => prod.category === (selectedCategory ?? "snacks"))
+  const [salesTimeframe, setSalesTimeframe] = useState<'day'|'month'|'year'|'custom'|'custom_days'|'others_days'>('day')
+  const [customValue, setCustomValue] = useState<number>(1)
+  const [customUnit, setCustomUnit] = useState<'days'|'months'|'years'>('days')
   
   // Apply filtering to customers based on query search
   const safeCustomers = customers || []
@@ -713,6 +595,7 @@ export function AdminDashboard({
           <main className="lg:col-span-9">
             {/* Overview stats row */}
             {activeTab === 'overview' && (
+              <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card 
                   onClick={() => setActiveStatFilter(activeStatFilter === "customers" ? "all" : "customers")}
@@ -786,31 +669,154 @@ export function AdminDashboard({
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Daily Sales Receipt (Overview) */}
+              <div className="mt-6">
+                <Card className={`bg-[#3d5a80] border-[#98c1d9]/30 mt-6`}>
+                  <CardHeader>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <CardTitle className="text-[#e0fbfc] flex items-center gap-2">
+                          <Calendar className="h-5 w-5 text-[#ee6c4d]" />
+                          {receiptHeading}
+                        </CardTitle>
+                        <CardDescription className="text-[#98c1d9]">
+                          {new Date().toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </CardDescription>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Select value={salesTimeframe} onValueChange={(value) => setSalesTimeframe(value)}>
+                          <SelectTrigger className="w-[180px] bg-[#293241] text-white border-[#98c1d9]/30">
+                            <SelectValue placeholder="Select timeframe" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#293241] text-white">
+                            <SelectItem value="day">Today</SelectItem>
+                            <SelectItem value="month">This Month</SelectItem>
+                            <SelectItem value="year">This Year</SelectItem>
+                            <SelectItem value="custom">Others...</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {salesTimeframe === 'custom' && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <input 
+                              type="number" 
+                              min="1" 
+                              className="border rounded p-1 w-16 text-black"
+                              value={customValue}
+                              onChange={(e) => setCustomValue(Math.max(1, parseInt(e.target.value) || 1))}
+                            />
+                            <select 
+                              value={customUnit} 
+                              onChange={(e) => setCustomUnit(e.target.value)}
+                              className="border rounded p-1 text-black"
+                            >
+                              <option value="days">Days Ago</option>
+                              <option value="months">Months Ago</option>
+                              <option value="years">Years Ago</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {activeSalesItems.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-[#98c1d9]/30">
+                              <TableHead className="text-[#98c1d9]">Customer</TableHead>
+                              <TableHead className="text-[#98c1d9]">Item</TableHead>
+                              <TableHead className="text-right text-[#98c1d9]">Amount</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {activeSalesItems.map((sale) => (
+                              <TableRow key={sale.id} className="border-[#98c1d9]/30">
+                                <TableCell className="text-[#e0fbfc]">{sale.customerName}</TableCell>
+                                <TableCell className="text-[#98c1d9]">{sale.item}</TableCell>
+                                <TableCell className="text-right text-[#ee6c4d] font-medium">
+                                  P{sale.amount.toFixed(2)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#98c1d9]/30">
+                          <span className="text-[#e0fbfc] font-bold">Total</span>
+                          <span className="text-[#ee6c4d] font-bold text-xl">
+                            P{totalSalesToday.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Receipt className="h-12 w-12 text-[#98c1d9]/50 mx-auto mb-4" />
+                        <p className="text-[#98c1d9]">No sales recorded for this timeframe</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Timeline Status Legend (Overview) */}
+                <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-6">
+                  <CardHeader>
+                    <CardTitle className="text-[#e0fbfc]">Timeline Status Legend</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-400" />
+                        <span className="text-sm text-[#e0fbfc]">Unpaid</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                        <span className="text-sm text-[#e0fbfc]">Overdue</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-green-400" />
+                        <span className="text-sm text-[#e0fbfc]">Fully Paid</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              </>
             )}
             {/* render tabbed panels below */}
             {activeTab !== 'overview' && <div className="mt-6" />}
 
-        {/* Free Delivery Toggle */}
-        <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mb-8">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Gift className="h-5 w-5 text-green-400" />
-                <div>
-                  <p className="text-[#e0fbfc] font-medium">Free Delivery Event</p>
-                  <p className="text-sm text-[#98c1d9]">
-                    Toggle to enable/disable free delivery for all orders
-                  </p>
+        {activeTab === 'policies' && (
+          <>
+          {/* Free Delivery Toggle */}
+          <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mb-8">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Gift className="h-5 w-5 text-green-400" />
+                  <div>
+                    <p className="text-[#e0fbfc] font-medium">Free Delivery Event</p>
+                    <p className="text-sm text-[#98c1d9]">
+                      Toggle to enable/disable free delivery for all orders
+                    </p>
+                  </div>
                 </div>
+                <Switch
+                  checked={freeDeliveryEvent}
+                  onCheckedChange={onToggleFreeDelivery}
+                  className="data-[state=checked]:bg-green-500"
+                />
               </div>
-              <Switch
-                checked={freeDeliveryEvent}
-                onCheckedChange={onToggleFreeDelivery}
-                className="data-[state=checked]:bg-green-500"
-              />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          </>
+        )}
 
         {/* ========================================================================= */}
         {/* UNIFIED SERVICES EDITOR                                                   */}
@@ -1529,6 +1535,7 @@ export function AdminDashboard({
         )}
 
         {/* Store Penalty Fee Policy Configuration */}
+        {activeTab === 'policies' && (
         <div className="grid lg:grid-cols-1 gap-8 mt-8">
           <Card className="bg-[#3d5a80] border-[#98c1d9]/30">
             <CardHeader>
@@ -1622,6 +1629,7 @@ export function AdminDashboard({
             </CardContent>
           </Card>
         </div>
+        )}
           </main>
         </div>
       </div>

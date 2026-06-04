@@ -319,13 +319,13 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
 
       {/* Floating FB Action button - Completely isolated layout position */}
       <a
-        href="https://m.me/1BcP1N5D2S"
+        href="https://www.facebook.com/share/1BcP1N5D2S/"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1877f2] text-white px-4 py-3 rounded-full shadow-xl hover:bg-[#166fe5] transition-all duration-200 hover:scale-105"
       >
         <MessageCircle className="h-5 w-5" />
-        <span className="hidden sm:inline text-xs font-bold tracking-wide">Message us on Messenger</span>
+        <span className="hidden sm:inline text-xs font-bold tracking-wide">Message us on Facebook</span>
       </a>
     </>
   )

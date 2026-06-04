@@ -107,18 +107,18 @@ export function SanglaSection({ onBack, isFullPage = false }: SanglaSectionProps
         <div className="mt-10 flex flex-col items-center justify-center text-center">
           {/* Primary Call-to-Action */}
           <a
-            href="https://m.me/1BcP1N5D2S"
+            href="https://www.facebook.com/share/1BcP1N5D2S/"
             target="_blank"
             rel="noopener noreferrer"
             className="transform transition-transform active:scale-95"
           >
             <Button className="bg-[#ee6c4d] hover:bg-[#d65a31] text-white font-bold px-8 py-6 rounded-xl text-sm shadow-md transition-all">
-              Message Us to Get a Quote
+              Message us on Facebook
             </Button>
           </a>
           
           <p className="text-[#98c1d9] text-xs mt-2.5">
-            Send photos of your item via Facebook Messenger for a quick estimate
+            Send photos of your item via Facebook for a quick estimate
           </p>
 
           {/* Contextual Separator */}

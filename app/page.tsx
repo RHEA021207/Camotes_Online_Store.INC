@@ -170,7 +170,20 @@ export default function Home() {
       setCurrentCustomer(profile)
       setIsCustomerAuthenticated(true)
     }
+
+    const storedCart = window.localStorage.getItem("cos-cart-items")
+    if (storedCart) {
+      try {
+        setCart(JSON.parse(storedCart))
+      } catch (error) {
+        console.warn("Failed to restore cart from storage", error)
+      }
+    }
   }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem("cos-cart-items", JSON.stringify(cart))
+  }, [cart])
 
   const servicesRef = useRef<HTMLDivElement>(null)
 
@@ -179,11 +192,17 @@ export default function Home() {
     window.setTimeout(() => setVisitorShieldMessage(""), 5000)
   }
 
-  const messengerPageId = "1BcP1N5D2S"
+  const messengerUsername = "YOUR_FB_PAGE_USERNAME"
+  const messengerBaseUrl = `https://m.me/${messengerUsername}`
+  const inquiryUrl = "https://www.facebook.com/share/1BcP1N5D2S/"
 
   const createMessengerLink = (message: string) => {
     const encodedMessage = encodeURIComponent(message)
-    return `https://m.me/${messengerPageId}?ref=${encodedMessage}`
+    return `${messengerBaseUrl}?ref=${encodedMessage}`
+  }
+
+  const handleInquire = () => {
+    window.open(inquiryUrl, "_blank")
   }
 
   const buildMessengerMessage = (serviceName: string, price: number, deliveryMode?: string) => {
@@ -286,7 +305,7 @@ export default function Home() {
     servicesRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  const handleAddToCart = (item: CartItem) => {
+  const addToCart = (item: CartItem) => {
     if (!isCustomerAuthenticated || !currentCustomer) {
       showVisitorShield("Please visit our physical store location to register your customer profile account.")
       return
@@ -311,6 +330,10 @@ export default function Home() {
   const handleUpdateCartQuantity = (id: string, quantity: number) => {
     if (quantity < 1) return
     setCart((prev) => prev.map((i) => (i.id === id ? { ...i, quantity } : i)))
+  }
+
+  const handleInquireItem = (_id: string) => {
+    window.open(inquiryUrl, "_blank")
   }
 
   const handleRemoveFromCart = (id: string) => {
@@ -351,7 +374,6 @@ export default function Home() {
     const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity + (item.deliveryFee || 0), 0)
     const message = `Hi! I am logged in as ${currentCustomer.name} and I want to order ${cartSummary} priced at ₱${totalAmount.toFixed(2)}.`
     window.open(createMessengerLink(message), "_blank")
-    setCart([])
     setCartOpen(false)
   }
 
@@ -783,16 +805,32 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <Button
-                      className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d] hobg-opacity-90 font-bold text-white transition-all shadow-md mt-2"
-                      onClick={handleProcessInstallmentCheckout}
-                      disabled={!isCustomerAuthenticated}
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      {isCustomerAuthenticated ? 'Request via Messenger' : 'Login to request quote'}
-                    </Button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Button
+                        className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 font-bold text-white transition-all shadow-md"
+                        onClick={() => {
+                          addToCart({
+                            id: `${category}-${selectedBrand}-${selectedModel}-${paymentOption}`,
+                            name: `${selectedBrand} ${selectedModel}${paymentOption === "later" ? ` (${paymentFrequency} ${paymentMonths}mo plan)` : ""}`,
+                            price: processedInstallmentPlan.grandTotal,
+                            quantity: 1,
+                          })
+                        }}
+                        disabled={!selectedBrand || !selectedModel}
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Add to Cart
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full text-[#e0fbfc] border-[#98c1d9] hover:bg-[#3d5a80]"
+                        onClick={handleInquire}
+                      >
+                        Inquire Right Away
+                      </Button>
+                    </div>
                     {!isCustomerAuthenticated && (
-                      <p className="mt-2 text-xs text-yellow-300">Log in to request a gadget or appliance quote via Messenger.</p>
+                      <p className="mt-2 text-xs text-yellow-300">Log in to add items to cart; you can still inquire immediately.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -816,7 +854,8 @@ export default function Home() {
         return (
           <ELoanSection 
             trustScore={userTrustScore} 
-            onApplyLoan={handleApplyLoan}
+            onAddToCart={(item) => addToCart(item)}
+            onInquire={handleInquire}
             onBack={() => setActiveView("home")}
             isFullPage
           />
@@ -824,7 +863,8 @@ export default function Home() {
       case "snacks":
         return (
           <SnacksSection 
-            onAddToCart={(item) => handleMessengerOrder(item.name, item.price)}
+            onAddToCart={(item) => addToCart(item)}
+            onInquire={handleInquire}
             onBack={() => setActiveView("home")}
             isFullPage
             isCustomerAuthenticated={isCustomerAuthenticated}
@@ -834,10 +874,8 @@ export default function Home() {
         return (
           <BugasSection
             freeDeliveryEvent={freeDeliveryEvent}
-            onAddToCart={(item) =>
-              handleMessengerOrder(item.name, item.price, item.deliveryMode)
-            }
-            onAddToTimelineDirectly={(name, totalAmount) => handleMessengerOrder(name, totalAmount)}
+            onAddToCart={(item) => addToCart(item)}
+            onInquire={handleInquire}
             onBack={() => setActiveView("home")}
             isFullPage
           />
@@ -1047,7 +1085,7 @@ export default function Home() {
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
         items={cart}
-        onUpdateQuantity={handleUpdateCartQuantity}
+        onInquireItem={handleInquireItem}
         onRemoveItem={handleRemoveFromCart}
         onCheckout={handleCheckout}
       />

@@ -19,7 +19,8 @@ import {
 
 interface ELoanSectionProps {
   trustScore: "new" | "good" | "excellent"
-  onApplyLoan: (amount: number, frequency: string, total: number) => void
+  onAddToCart: (item: { id: string; name: string; price: number; quantity: number }) => void
+  onInquire: () => void
   onBack?: () => void
   isFullPage?: boolean
 }
@@ -41,7 +42,7 @@ const loanAmounts = [
 
 const interestRate = 0.02 // 2% interest rate
 
-export function ELoanSection({ trustScore, onApplyLoan, onBack, isFullPage = false }: ELoanSectionProps) {
+export function ELoanSection({ trustScore, onAddToCart, onInquire, onBack, isFullPage = false }: ELoanSectionProps) {
   const { penaltyFeePercentage } = useServices()
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null)
   const [selectedFrequency, setSelectedFrequency] = useState<string>("")
@@ -339,12 +340,26 @@ export function ELoanSection({ trustScore, onApplyLoan, onBack, isFullPage = fal
                     </div>
                   </div>
 
-                  <Button 
-                    className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
-                    onClick={() => onApplyLoan(selectedAmount, selectedFrequency, calculateTotal())}
-                  >
-                    Apply for Loan
-                  </Button>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Button 
+                      className="w-full bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
+                      onClick={() => onAddToCart({
+                        id: `e-loan-${selectedAmount}-${selectedFrequency}-${getEffectiveTerm()}`,
+                        name: `E-Loan P${selectedAmount} (${selectedFrequency})`,
+                        price: calculateTotal(),
+                        quantity: 1,
+                      })}
+                    >
+                      Add to Cart
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full text-[#e0fbfc] border-[#98c1d9] hover:bg-[#293241]"
+                      onClick={onInquire}
+                    >
+                      Inquire Right Away
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <div className="text-center py-8">

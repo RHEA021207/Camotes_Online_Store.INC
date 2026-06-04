@@ -28,12 +28,7 @@ interface BugasSectionProps {
     deliveryFee: number
     paymentMode: string
   }) => void
-  onAddToTimelineDirectly: (
-    name: string, 
-    totalAmount: number, 
-    customDueDate: string, 
-    type: "purchase" | "loan"
-  ) => void
+  onInquire: () => void
   onBack?: () => void
   isFullPage?: boolean
 }
@@ -56,7 +51,7 @@ export function BugasSection({
   freeDeliveryEvent, 
   isAdmin = false,
   onAddToCart, 
-  onAddToTimelineDirectly, 
+  onInquire,
   onBack, 
   isFullPage = false 
 }: BugasSectionProps) {
@@ -83,18 +78,21 @@ export function BugasSection({
           .single()
 
         if (error) {
-          console.error('Error fetching bugas service:', error)
-        } else if (data) {
-          // Use service description and details if available
-          if (data.description) {
-            setBugasDescription(data.description)
+          if (error.code !== 'PGRST116') {
+            console.error('Error fetching bugas service:', error);
           }
-          // Could also update prices from Supabase if you add those fields
+          setBugasDescription("Premium Quality Rice (Bugas) available for retail and wholesale distribution.");
+        } else if (data) {
+          if (data.description) {
+            setBugasDescription(data.description);
+          }
         }
+        
+        // Could also update prices from Supabase if you add those fields
       } catch (err) {
-        console.error('Supabase fetch error:', err)
+        console.error('Supabase fetch error:', err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
@@ -171,27 +169,17 @@ export function BugasSection({
     if (!selectedQuantity) return
     
     const terms = getCalculatedTerms()
-    const finalDueDate = getCalculatedDueDate()
 
-    if (paymentMode === "cash") {
-      onAddToCart({
-        id: `bugas-${selectedQuantity}kg`,
-        name: `Bugas ${selectedQuantity}kl`,
-        price: calculateBasePrincipal(),
-        quantity: 1,
-        deliveryMode,
-        deliveryFee: getDeliveryFee(),
-        paymentMode,
-      })
-    } else {
-      const paymentPlanName = paymentModes.find(m => m.id === paymentMode)?.label || "Installment"
-      onAddToTimelineDirectly(
-        `🌾 Bugas ${selectedQuantity}kl Plan (${paymentPlanName})`,
-        terms.grandTotalAmount,
-        finalDueDate,
-        "purchase"
-      )
-    }
+    const paymentPlanName = paymentModes.find(m => m.id === paymentMode)?.label || "Installment"
+    onAddToCart({
+      id: `bugas-${selectedQuantity}kg-${paymentMode}`,
+      name: `Bugas ${selectedQuantity}kl (${paymentPlanName})`,
+      price: terms.grandTotalAmount,
+      quantity: 1,
+      deliveryMode,
+      deliveryFee: getDeliveryFee(),
+      paymentMode,
+    })
   }
 
   const activeTerms = getCalculatedTerms()
@@ -401,17 +389,22 @@ export function BugasSection({
                 </div>
               )}
 
-              <Button
-                className={`w-full text-white font-bold transition-all ${
-                  paymentMode === "cash" 
-                    ? "bg-[#ee6c4d] hover:bg-[#ee6c4d]/80" 
-                    : "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
-                }`}
-                disabled={!selectedQuantity}
-                onClick={handleActionExecution}
-              >
-                {paymentMode === "cash" ? "Add to Cart" : "Apply for Installment Plan"}
-              </Button>
+              <div className="grid grid-cols-1 gap-2">
+                <Button
+                  className="w-full text-white font-bold bg-[#ee6c4d] hover:bg-[#ee6c4d]/80"
+                  disabled={!selectedQuantity}
+                  onClick={handleActionExecution}
+                >
+                  Add to Cart
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full text-[#e0fbfc] border-[#98c1d9] hover:bg-[#293241]"
+                  onClick={onInquire}
+                >
+                  Inquire Right Away
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
