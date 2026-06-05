@@ -26,6 +26,7 @@ interface HeaderProps {
 export function Header({ onNavigate, cartCount, showBackButton = false, currentSection }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const hideCustomerActions = currentSection === "admin"
+  const hideSearch = currentSection === "account"
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
@@ -97,66 +98,67 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
           </div>
 
           {/* Search Bar - Centers on Desktop */}
-          <div className="relative hidden flex-1 max-w-xs lg:max-w-md mx-2 md:block">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98c1d9]" />
-            <Input
-              type="search"
-              placeholder="Search e-loan, bugas, gadgets, sangla..."
-              className="w-full pl-10 bg-[#3d5a80] border-[#98c1d9] text-[#e0fbfc] placeholder:text-[#98c1d9] plactext-opacity-70 h-9 text-xs"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setShowSuggestions(true)
-              }}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSearch(searchQuery)
-                }
-              }}
-            />
-            {showSuggestions && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[#3d5a80] border border-[#98c1d9] rounded-md shadow-lg overflow-hidden z-50">
-                <div className="p-3 border-b border-[#98c1d9] border-opacity-30">
-                  <p className="text-xs text-[#98c1d9] mb-2">Quick Search</p>
-                  <div className="flex flex-wrap gap-2">
-                    {searchSuggestions.map((suggestion) => (
-                      <Badge
-                        key={suggestion}
-                        variant="secondary"
-                        className="bg-[#293241] text-[#e0fbfc] hover:bg-[#ee6c4d] hover:text-white cursor-pointer transition-colors"
-                        onClick={() => handleSuggestionClick(suggestion)}
-                      >
-                        {suggestion}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                
-                {recentSearches.length > 0 && (
-                  <div className="p-3">
-                    <p className="text-xs text-[#98c1d9] mb-2 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Recent Searches
-                    </p>
-                    <div className="space-y-1">
-                      {recentSearches.map((term, index) => (
-                        <button
-                          key={index}
-                          className="w-full px-3 py-1.5 text-left text-sm text-[#e0fbfc] hover:bg-[#293241] rounded transition-colors flex items-center gap-2"
-                          onClick={() => handleSuggestionClick(term)}
+          {!hideSearch && (
+            <div className="relative hidden flex-1 max-w-xs lg:max-w-md mx-2 md:block">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98c1d9]" />
+              <Input
+                type="search"
+                placeholder="Search e-loan, bugas, gadgets, sangla..."
+                className="w-full pl-10 bg-[#3d5a80] border-[#98c1d9] text-[#e0fbfc] placeholder:text-[#98c1d9] placeholder-opacity-70 h-9 text-xs"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setShowSuggestions(true)
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearch(searchQuery)
+                  }
+                }}
+              />
+              {showSuggestions && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#3d5a80] border border-[#98c1d9] rounded-md shadow-lg overflow-hidden z-50">
+                  <div className="p-3 border-b border-[#98c1d9] border-opacity-30">
+                    <p className="text-xs text-[#98c1d9] mb-2">Quick Search</p>
+                    <div className="flex flex-wrap gap-2">
+                      {searchSuggestions.map((suggestion) => (
+                        <Badge
+                          key={suggestion}
+                          variant="secondary"
+                          className="bg-[#293241] text-[#e0fbfc] hover:bg-[#ee6c4d] hover:text-white cursor-pointer transition-colors"
+                          onClick={() => handleSuggestionClick(suggestion)}
                         >
-                          <Clock className="h-3 w-3 text-[#98c1d9]" />
-                          {term}
-                        </button>
+                          {suggestion}
+                        </Badge>
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                  {recentSearches.length > 0 && (
+                    <div className="p-3">
+                      <p className="text-xs text-[#98c1d9] mb-2 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Recent Searches
+                      </p>
+                      <div className="space-y-1">
+                        {recentSearches.map((term, index) => (
+                          <button
+                            key={index}
+                            className="w-full px-3 py-1.5 text-left text-sm text-[#e0fbfc] hover:bg-[#293241] rounded transition-colors flex items-center gap-2"
+                            onClick={() => handleSuggestionClick(term)}
+                          >
+                            <Clock className="h-3 w-3 text-[#98c1d9]" />
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Right Navigation Actions block - flex-shrink-0 keeps icons locked inside view */}
           <div className="flex items-center gap-1 sm:gap-3 ml-auto md:ml-0 flex-shrink-0">
@@ -237,38 +239,42 @@ export function Header({ onNavigate, cartCount, showBackButton = false, currentS
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-[#3d5a80] bg-[#293241] animate-in slide-in-from-top-2 duration-200">
             <div className="p-4 space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98c1d9]" />
-                <Input
-                  type="search"
-                  placeholder="Search items..."
-                  className="w-full pl-10 bg-[#3d5a80] border-[#98c1d9] text-[#e0fbfc] h-9 text-xs"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSearch(searchQuery)
-                      setMobileMenuOpen(false)
-                    }
-                  }}
-                />
-              </div>
-              <div className="flex flex-wrap gap-1.5 pt-0.5">
-                {searchSuggestions.map((suggestion) => (
-                  <Badge
-                    key={suggestion}
-                    variant="secondary"
-                    className="bg-[#3d5a80] text-[#e0fbfc] hover:bg-[#ee6c4d] hover:text-white cursor-pointer transition-colors text-[11px]"
-                    onClick={() => {
-                      handleSuggestionClick(suggestion)
-                      setMobileMenuOpen(false)
+              {!hideSearch && (
+              <>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98c1d9]" />
+                  <Input
+                    type="search"
+                    placeholder="Search items..."
+                    className="w-full pl-10 bg-[#3d5a80] border-[#98c1d9] text-[#e0fbfc] h-9 text-xs"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearch(searchQuery)
+                        setMobileMenuOpen(false)
+                      }
                     }}
-                  >
-                    {suggestion}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {searchSuggestions.map((suggestion) => (
+                    <Badge
+                      key={suggestion}
+                      variant="secondary"
+                      className="bg-[#3d5a80] text-[#e0fbfc] hover:bg-[#ee6c4d] hover:text-white cursor-pointer transition-colors text-[11px]"
+                      onClick={() => {
+                        handleSuggestionClick(suggestion)
+                        setMobileMenuOpen(false)
+                      }}
+                    >
+                      {suggestion}
+                    </Badge>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
             <nav className="flex flex-col border-t border-[#3d5a80] border-opacity-40">
               {showBackButton ? (
                 <button

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Image from "next/image"
 import { MapPin, ShoppingCart, Calendar, Info, Layers, ArrowDown, Search } from "lucide-react"
 import AccountModal from "@/components/account-modal"
 
@@ -957,6 +958,93 @@ export default function Home() {
             </div>
           </section>
         )
+      case "account":
+        return (
+          <section className="relative overflow-hidden bg-[#293241] py-24">
+            <div className="absolute inset-0">
+              <Image
+                src="/images/hero-background.jpg"
+                alt="Account dashboard background"
+                fill
+                className="object-cover object-center opacity-20"
+                priority
+              />
+              <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
+            </div>
+            <div className="relative z-10 container mx-auto px-4">
+              <div className="rounded-[2rem] border border-white/10 bg-[#1d2430]/75 backdrop-blur-xl p-8 shadow-2xl">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-[#98c1d9] mb-2">My Account</p>
+                    <h1 className="text-3xl lg:text-4xl font-bold text-white">Profile Summary & Visibility</h1>
+                    <p className="mt-3 max-w-2xl text-sm text-[#c8d6df]">
+                      A dedicated account dashboard for your profile metrics, payment status, and customer standing.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-6 mt-10 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-3xl bg-[#293241]/80 border border-[#98c1d9]/10 p-6">
+                    <p className="text-sm text-[#98c1d9] uppercase tracking-[0.3em] mb-3">Account Status</p>
+                    <p className="text-3xl font-bold text-white">{currentCustomer?.standing === "good" ? "Good Standing" : "Restricted"}</p>
+                    <p className="mt-2 text-sm text-[#c8d6df]">Your current customer standing determines service access.</p>
+                  </div>
+                  <div className="rounded-3xl bg-[#293241]/80 border border-[#98c1d9]/10 p-6">
+                    <p className="text-sm text-[#98c1d9] uppercase tracking-[0.3em] mb-3">Trust Score</p>
+                    <p className="text-3xl font-bold text-white">{currentCustomer?.trustScore ?? "N/A"}</p>
+                    <p className="mt-2 text-sm text-[#c8d6df]">A quick snapshot of your customer trust and reliability.</p>
+                  </div>
+                  <div className="rounded-3xl bg-[#293241]/80 border border-[#98c1d9]/10 p-6">
+                    <p className="text-sm text-[#98c1d9] uppercase tracking-[0.3em] mb-3">Current Balance</p>
+                    <p className="text-3xl font-bold text-white">P{currentCustomer?.balance.toFixed(2) ?? "0.00"}</p>
+                    <p className="mt-2 text-sm text-[#c8d6df]">Outstanding balance as of your latest activity.</p>
+                  </div>
+                  <div className="rounded-3xl bg-[#293241]/80 border border-[#98c1d9]/10 p-6">
+                    <p className="text-sm text-[#98c1d9] uppercase tracking-[0.3em] mb-3">Last Payment</p>
+                    <p className="text-3xl font-bold text-white">{currentCustomer?.lastPayment ?? "N/A"}</p>
+                    <p className="mt-2 text-sm text-[#c8d6df]">Most recent payment or account update timestamp.</p>
+                  </div>
+                </div>
+
+                <div className="mt-10 grid gap-6 lg:grid-cols-2">
+                  <div className="rounded-3xl bg-[#293241]/80 border border-[#98c1d9]/10 p-6">
+                    <h2 className="text-xl font-semibold text-[#e0fbfc]">Profile Details</h2>
+                    <div className="mt-6 space-y-4 text-sm text-[#98c1d9]">
+                      <div>
+                        <p className="text-[#c8d6df]">Name</p>
+                        <p className="font-semibold text-white">{currentCustomer?.name ?? "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[#c8d6df]">Customer ID</p>
+                        <p className="font-semibold text-white">{currentCustomer?.id ?? "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[#c8d6df]">Standing</p>
+                        <p className="font-semibold text-white">{currentCustomer?.standing === "good" ? "Good" : "Restricted"}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-3xl bg-[#293241]/80 border border-[#98c1d9]/10 p-6">
+                    <h2 className="text-xl font-semibold text-[#e0fbfc]">Account Visibility</h2>
+                    <p className="mt-4 text-sm text-[#98c1d9]">
+                      This view is intentionally focused on account metrics and profile data. Browse Services is available only from the landing hero or global navigation links.
+                    </p>
+                    <div className="mt-6 space-y-3 text-sm text-[#c8d6df]">
+                      <div className="rounded-2xl bg-[#1e2530] p-4 border border-[#98c1d9]/10">
+                        <p className="font-semibold text-white">Customer Balance</p>
+                        <p className="text-[#98c1d9]">Review your current outstanding amounts and payments.</p>
+                      </div>
+                      <div className="rounded-2xl bg-[#1e2530] p-4 border border-[#98c1d9]/10">
+                        <p className="font-semibold text-white">Service Access</p>
+                        <p className="text-[#98c1d9]">Account standing is used to gate access to orders and timeline features.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )
       case "admin":
         if (!isAdminAuthenticated) {
           return <AdminLogin onLogin={handleAdminLogin} />
@@ -979,7 +1067,7 @@ export default function Home() {
       default:
         return (
           <>
-            <HeroSection onBrowseServices={handleBrowseServices} />
+            <HeroSection onBrowseServices={handleBrowseServices} onFindAccount={() => setAuthModalOpen(true)} />
             <div ref={servicesRef}>
               <ServicesGrid onSelectService={handleNavigate} />
             </div>
@@ -1010,60 +1098,7 @@ export default function Home() {
       
       {activeView === "home" ? (
         <>
-          {/* 1. Main Hero Landing Section (Full-screen 100vh) */}
-          <section className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden bg-[#1a202c]">
-            {/* White Office/Interior Background Image Asset */}
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-transform duration-1000"
-              style={{ backgroundImage: `url('/for the background.jpg')` }} 
-            />
-            {/* Balanced Dark Aesthetic Overlay Mask for Strong Contrast */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-[#293241]" />
-
-            {/* Centered Main Character Headline Typography */}
-            <div className="relative z-10 text-center px-4 max-w-4xl select-none mt-12">
-              <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-white tracking-tight drop-shadow-[0_8px_8px_rgba(0,0,0,0.8)]">
-                Hello! How can I help you?
-              </h1>
-              <p className="text-[#e0fbfc] text-opacity-80 font-medium text-sm sm:text-base md:text-lg mt-4 max-w-xl mx-auto drop-shadow-md">
-                Your neighborhood digital ledger. Buy now, pay over time. Track every peso (₱) with confidence.
-              </p>
-
-              {/* Interactive Dashboard Control Buttons */}
-              <div className="mt-8 flex flex-wrap justify-center items-center gap-4">
-                <button
-                  onClick={handleBrowseServices}
-                  className="bg-[#ee6c4d] hover:bg-[#d65a31] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center gap-2"
-                >
-                  <Layers className="h-4 w-4" />
-                  Browse Services
-                </button>
-                
-                <button
-                  onClick={() => setAuthModalOpen(true)}
-                  className="bg-[#293241] bg-opacity-90 hover:bg-[#3d5a80] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all transform hover:scale-105 border border-[#3d5a80] flex items-center gap-2"
-                >
-                  <Search className="h-4 w-4 text-[#98c1d9]" />
-                  Find My Account
-                </button>
-              </div>
-            </div>
-
-            {/* Scroll Indicator Prompt */}
-            <div 
-              className="absolute bottom-10 z-10 flex flex-col items-center gap-2 cursor-pointer group"
-              onClick={handleBrowseServices}
-            >
-              <span className="text-xs text-white/60 font-bold tracking-widest uppercase group-hover:text-white transition-colors duration-300">
-                Browse Services
-              </span>
-              <div className="p-2 rounded-full bg-white/5 border border-white/10 group-hover:border-[#ee6c4d] group-hover:border-opacity-50 group-hover:bg-white/10 transition-all duration-300">
-                <ArrowDown className="h-5 w-5 text-[#ee6c4d] animate-bounce" />
-              </div>
-            </div>
-          </section>
-
-          {/* 2. Services Grid Layout */}
+          <HeroSection onBrowseServices={handleBrowseServices} onFindAccount={() => setAuthModalOpen(true)} />
           <div ref={servicesRef} className="bg-[#293241] py-24 border-t border-[#3d5a80] border-opacity-60">
             <div className="container mx-auto px-4">
               <ServicesGrid onSelectService={handleNavigate} />
@@ -1084,6 +1119,10 @@ export default function Home() {
       <CartSidebar
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
+        onContinueShopping={() => {
+          setCartOpen(false)
+          handleNavigate("services")
+        }}
         items={cart}
         onInquireItem={handleInquireItem}
         onRemoveItem={handleRemoveFromCart}

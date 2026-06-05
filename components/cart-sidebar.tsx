@@ -21,6 +21,7 @@ interface CartSidebarProps {
   onRemoveItem: (id: string) => void
   onInquireItem: (id: string) => void
   onCheckout: () => void
+  onContinueShopping?: () => void
 }
 
 export function CartSidebar({
@@ -30,6 +31,7 @@ export function CartSidebar({
   onRemoveItem,
   onInquireItem,
   onCheckout,
+  onContinueShopping,
 }: CartSidebarProps) {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const deliveryFees = items.reduce((sum, item) => sum + (item.deliveryFee || 0), 0)
@@ -75,7 +77,10 @@ export function CartSidebar({
               <Button
                 variant="ghost"
                 className="mt-4 text-[#ee6c4d] hover:text-[#ee6c4d]/80"
-                onClick={onClose}
+                onClick={() => {
+                  onClose()
+                  onContinueShopping?.()
+                }}
               >
                 Continue Shopping
               </Button>

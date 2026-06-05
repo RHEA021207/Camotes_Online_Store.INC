@@ -119,6 +119,20 @@ export function AdminDashboard({
   const [editingCustomer, setEditingCustomer] = useState<Partial<Customer> | null>(null)
   const [editingStockId, setEditingStockId] = useState<string | null>(null)
   const [editingStockData, setEditingStockData] = useState<Partial<StockItem>>({})
+  const [editingProductId, setEditingProductId] = useState<string | null>(null)
+  const [showAddProductForm, setShowAddProductForm] = useState(false)
+  const [newProdName, setNewProdName] = useState("")
+  const [newProdDesc, setNewProdDesc] = useState("")
+  const [newProdCat, setNewProdCat] = useState<"e-loan" | "bugas" | "snacks" | "gadgets" | "appliances" | "sangla">("e-loan")
+  const [newProdPrice, setNewProdPrice] = useState<number>(0)
+  const [newProdDeliveryFee, setNewProdDeliveryFee] = useState<number>(0)
+  const [newProdStockStatus, setNewProdStockStatus] = useState<"available" | "out_of_stock" | "sold_out">("available")
+  const [newProdBrand, setNewProdBrand] = useState("")
+  const [newProdImageFile, setNewProdImageFile] = useState<File | null>(null)
+  const [newProdImagePreview, setNewProdImagePreview] = useState("")
+  const [draggingNewImage, setDraggingNewImage] = useState(false)
+  const [uploadingProductId, setUploadingProductId] = useState<string | null>(null)
+  const [imageUploadError, setImageUploadError] = useState("")
   
   // Admin account settings state
   const [showAdminSettings, setShowAdminSettings] = useState(false)
@@ -143,8 +157,8 @@ export function AdminDashboard({
   const [newItemAmount, setNewItemAmount] = useState(0)
   const [newItemDescription, setNewItemDescription] = useState("")
 
-  // Form states for creating a whole new service / category card 
-  const [showAddProductForm, setShowAddProductForm] = useState(true)
+  // Form states for creating a whole new service / category card
+const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
   const categoryLabels: Record<string, string> = {
     bugas: "Bugas",
     snacks: "Snacks",
@@ -425,7 +439,7 @@ export function AdminDashboard({
     setNewProdCat(product.category as "e-loan" | "bugas" | "snacks" | "gadgets" | "appliances" | "sangla")
     setNewProdPrice(product.price || 0)
     setNewProdDeliveryFee(product.deliveryFee || 0)
-    setNewProdStockStatus(product.stockStatus === "out_of_stock" ? "sold_out" : (product.stockStatus || "available"))
+    setNewProdStockStatus((product.stockStatus === "out_of_stock" ? "sold_out" : (product.stockStatus || "available")) as "available" | "out_of_stock" | "sold_out")
     setNewProdBrand(product.brand || "")
     setNewProdImagePreview(product.image || "")
     setNewProdImageFile(null)
@@ -490,8 +504,21 @@ export function AdminDashboard({
     setCustomerEditModalOpen(false)
     setEditingCustomer(null)
   }
+ // Safely define low stock items array right before the layout returns
+  const lowStockItems = (products || []).filter(
+    (product) => product.stockStatus === "out_of_stock" || product.stockStatus === "sold_out"
+  );
 
-  return (
+  // Generate the dynamic text heading for your sales receipts card based on the active timeframe filter
+  let receiptHeading = "Sales Receipts Overview";
+  if (salesTimeframe === "day") receiptHeading = "Today's Sales Receipts";
+  else if (salesTimeframe === "month") receiptHeading = "This Month's Sales Receipts";
+  else if (salesTimeframe === "year") receiptHeading = "This Year's Sales Receipts";
+  else if (salesTimeframe === "custom" || salesTimeframe === "custom_days") {
+    receiptHeading = `Sales Receipts (Past ${customValue} Days)`;
+  }
+
+return (
     <section className="py-12 bg-[#293241]" id="admin">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
@@ -532,7 +559,12 @@ export function AdminDashboard({
                         <Input type="password" value={adminPasswordConfirm} onChange={(e) => setAdminPasswordConfirm(e.target.value)} className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]" />
                         {adminSettingsError && <div className="p-2 bg-red-500/10 text-red-400 rounded">{adminSettingsError}</div>}
                         <div className="flex gap-2 mt-2">
-                          <Button className="flex-1 bg-green-500 hover:bg-green-600 text-white" onClick={handleSaveAdminSettings}><Check className="h-4 w-4 mr-1"/> Save</Button>
+                         <Button className="flex-1 bg-green-500 hover:bg-green-600 text-white" onClick={() => {
+  if (updateAdminCredentials) {
+    updateAdminCredentials(adminUsername, adminPassword);
+    setShowAdminSettings(false);
+  }
+}}><Check className="h-4 w-4 mr-1"/> Save</Button>
                           <Button variant="outline" className="flex-1" onClick={() => setShowAdminSettings(false)}>Close</Button>
                         </div>
                       </div>
@@ -581,7 +613,6 @@ export function AdminDashboard({
           <aside className="lg:col-span-3">
             <div className="sticky top-24 space-y-3">
               <div className="bg-[#1d2430] p-3 rounded border border-[#98c1d9]/20">
-                <p className="text-sm text-[#98c1d9]">Navigate</p>
                 <div className="mt-3 flex flex-col gap-2">
                   <Button onClick={() => setActiveTab('overview')} className={activeTab === 'overview' ? 'bg-[#ee6c4d] text-white' : 'bg-[#293241] text-[#98c1d9]'}>📊 Overview</Button>
                   <Button onClick={() => setActiveTab('inventory')} className={activeTab === 'inventory' ? 'bg-[#ee6c4d] text-white' : 'bg-[#293241] text-[#98c1d9]'}>📦 Product Inventory Editor</Button>
@@ -690,7 +721,7 @@ export function AdminDashboard({
                         </CardDescription>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <Select value={salesTimeframe} onValueChange={(value) => setSalesTimeframe(value)}>
+                        <Select value={salesTimeframe} onValueChange={(value) => setSalesTimeframe(value as "day" | "month" | "year" | "custom" | "custom_days" | "others_days")}>
                           <SelectTrigger className="w-[180px] bg-[#293241] text-white border-[#98c1d9]/30">
                             <SelectValue placeholder="Select timeframe" />
                           </SelectTrigger>
@@ -713,7 +744,7 @@ export function AdminDashboard({
                             />
                             <select 
                               value={customUnit} 
-                              onChange={(e) => setCustomUnit(e.target.value)}
+                              onChange={(e) => setCustomUnit(e.target.value as "days" | "months" | "years")}
                               className="border rounded p-1 text-black"
                             >
                               <option value="days">Days Ago</option>
@@ -874,13 +905,13 @@ export function AdminDashboard({
                         Update the current category display header, pricing rules, and description in one place.
                       </p>
                     </div>
-                    <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white" onClick={() => handleEditCategory(selectedCategory!)}>
+                   <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white" onClick={() => { const activeConfig = categoryConfigs.find(c => c.categoryKey === selectedCategory); setEditingCategoryId(selectedCategory); setEditingCategoryData(activeConfig ? { ...activeConfig } : {}); }}>
                       <Edit2 className="h-4 w-4 mr-1" /> Edit Header
                     </Button>
                   </div>
 
-                  {currentCategory && editingCategoryId === selectedCategory && editingCategoryData ? (
-                    <div className="mt-5 space-y-6 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4">
+                 {editingCategoryId === selectedCategory && editingCategoryData ?
+ ( <div className="mt-5 space-y-6 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4">
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         <div>
                           <Label className="text-[#98c1d9] text-xs">Service Name</Label>
@@ -943,55 +974,76 @@ export function AdminDashboard({
 
                         <Table>
                           <TableHeader>
-                            <TableRow>
+                            <TableRow className="border-[#98c1d9]/30">
                               <TableHead className="text-[#98c1d9]">Item Name</TableHead>
-                              <TableHead className="text-[#98c1d9]">Price / Rate</TableHead>
-                              <TableHead className="text-[#98c1d9]">Unit / Description</TableHead>
-                              <TableHead className="text-[#98c1d9]">Actions</TableHead>
+                              <TableHead className="text-[#98c1d9]">Price</TableHead>
+                              <TableHead className="text-[#98c1d9]">Description</TableHead>
+                              <TableHead className="text-[#98c1d9] text-right">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {(editingCategoryData.items || []).length > 0 ? (
-                              (editingCategoryData.items || []).map((item: any) => (
-                                <TableRow key={item.id || item.name} className="border-t border-[#98c1d9]/10">
-                                  <TableCell className="p-2">
-                                    <Input
-                                      value={item.name || ''}
-                                      onChange={(e) => handleCategoryItemChange(item.id, 'name', e.target.value)}
-                                      className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
-                                      placeholder="Item name"
-                                    />
-                                  </TableCell>
-                                  <TableCell className="p-2">
-                                    <Input
-                                      type="number"
-                                      value={item.amount ?? ''}
-                                      onChange={(e) => handleCategoryItemChange(item.id, 'amount', parseInt(e.target.value) || 0)}
-                                      className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
-                                      placeholder="Price"
-                                    />
-                                  </TableCell>
-                                  <TableCell className="p-2">
-                                    <Input
-                                      value={item.description || ''}
-                                      onChange={(e) => handleCategoryItemChange(item.id, 'description', e.target.value)}
-                                      className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
-                                      placeholder="Unit or description"
-                                    />
-                                  </TableCell>
-                                  <TableCell className="p-2 text-right">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="text-[#ee6c4d] hover:text-red-400"
-                                      onClick={() => handleRemoveCategoryItem(item.id)}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            ) : (
+                            {(editingCategoryData?.items || []).length > 0 ? (
+                              (editingCategoryData?.items || []).map((item: any, index: number) => (
+                                <TableRow key={item.id || item.name || index} className="border-t border-[#98c1d9]/10">
+        <TableCell className="p-2">
+          <Input 
+            value={item.name || ''} 
+            onChange={(e) => {
+              setEditingCategoryData((prev: any) => {
+                const updated = [...(prev.items || [])];
+                updated[index] = { ...updated[index], name: e.target.value };
+                return { ...prev, items: updated };
+              });
+            }} 
+            className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]" 
+            placeholder="Item name" 
+          />
+        </TableCell>
+        <TableCell className="p-2">
+          <Input 
+            type="number" 
+            value={item.amount ?? ''} 
+            onChange={(e) => {
+              setEditingCategoryData((prev: any) => {
+                const updated = [...(prev.items || [])];
+                updated[index] = { ...updated[index], amount: parseInt(e.target.value) || 0 };
+                return { ...prev, items: updated };
+              });
+            }} 
+            className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]" 
+            placeholder="Price" 
+          />
+        </TableCell>
+        <TableCell className="p-2">
+          <Input 
+            value={item.description || ''} 
+            onChange={(e) => {
+              setEditingCategoryData((prev: any) => {
+                const updated = [...(prev.items || [])];
+                updated[index] = { ...updated[index], description: e.target.value };
+                return { ...prev, items: updated };
+              });
+            }} 
+            className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]" 
+            placeholder="Unit or description" 
+          />
+        </TableCell>
+        <TableCell className="p-2 text-right">
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="text-[#ee6c4d] hover:text-red-400" 
+            onClick={() => {
+              setEditingCategoryData((prev: any) => ({
+                ...prev,
+                items: (prev.items || []).filter((_: any, i: number) => i !== index)
+              }));
+            }} 
+          />
+        </TableCell>
+      </TableRow>
+    ))
+  ) : (
                               <TableRow>
                                 <TableCell colSpan={4} className="py-6 text-center text-sm text-[#98c1d9]">
                                   No category items yet. Add a new item to expand this catalog.
@@ -1034,9 +1086,14 @@ export function AdminDashboard({
                               </div>
                             </div>
                             <div className="flex justify-end">
-                              <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white" onClick={handleAddCategoryItem}>
-                                <Plus className="h-4 w-4 mr-1" /> Add Item
-                              </Button>
+                             <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white" onClick={() => {
+  setEditingCategoryData((prev: any) => ({
+    ...prev,
+    items: [...(prev?.items || []), { name: "", amount: 0, description: "" }]
+  }));
+}}>
+  <Plus className="h-4 w-4 mr-1" /> Add Item
+</Button>
                             </div>
                           </div>
                         )}
@@ -1046,29 +1103,44 @@ export function AdminDashboard({
                         <Button size="sm" variant="outline" className="text-slate-400" onClick={() => setEditingCategoryId(null)}>
                           Cancel
                         </Button>
-                        <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white" onClick={handleSaveCategory}>
+                        <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white" onClick={() => {
+                          if (selectedCategory && editingCategoryData) {
+                            updateCategoryConfig(selectedCategory, editingCategoryData)
+                            setEditingCategoryId(null)
+                            setEditingCategoryData(null)
+                          }
+                        }}>
                           <Check className="h-4 w-4 mr-1" /> Save Changes
                         </Button>
                       </div>
-                    </div>
-                  ) : currentCategory ? (
-                    <div className="mt-5 grid gap-3 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4 text-sm text-[#98c1d9]">
-                      <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
-                        <span>Amount Range</span>
-                        <span className="font-semibold text-[#e0fbfc]">P{currentCategory.minAmount} - P{currentCategory.maxAmount}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
-                        <span>Delivery Fee</span>
-                        <span className="font-semibold text-[#e0fbfc]">P{currentCategory.deliveryFee}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
-                        <span>Total Items</span>
-                        <span className="font-semibold text-[#e0fbfc]">{currentCategory.items?.length || 0}</span>
-                      </div>
-                      <div className="rounded-lg bg-[#212a35] p-3 text-[#98c1d9]">
-                        No service description is available for this category.
-                      </div>
-                    </div>
+      </div>
+) : selectedCategory ? (
+      <>
+        {(() => {
+          const activeConfig = categoryConfigs.find(c => c.categoryKey === selectedCategory);
+          return (
+            <div className="mt-5 grid gap-3 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4 text-[#e0fbfc]">
+              <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
+                <span>Amount Range</span>
+                <span className="font-semibold text-[#e0fbfc]">
+                  P{activeConfig?.minAmount ?? 0} - P{activeConfig?.maxAmount ?? 0}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
+                <span>Delivery Fee</span>
+                <span className="font-semibold text-[#e0fbfc]">P{activeConfig?.deliveryFee ?? 0}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
+                <span>Total Items</span>
+                <span className="font-semibold text-[#e0fbfc]">{activeConfig?.items?.length || 0}</span>
+              </div>
+            </div>
+          );
+        })()}
+        <div className="rounded-lg bg-[#212a35] p-3 text-[#98c1d9]">
+          No service description is available for this category.
+        </div>
+      </>
                   ) : null}
                 </div>
 
@@ -1205,265 +1277,144 @@ export function AdminDashboard({
         {/* ========================================================================= */}
 
         {activeTab === 'customers' && (
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Daily Sales Receipt */}
-          <Card className={`bg-[#3d5a80] border-[#98c1d9]/30 ${activeStatFilter !== "all" && activeStatFilter !== "sales" && activeStatFilter !== "transactions" ? "ring-2 ring-amber-500" : ""}`}>
+          <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-8">
             <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <CardTitle className="text-[#e0fbfc] flex items-center gap-2 transition-all">
-                    <Calendar className="h-5 w-5 text-[#ee6c4d]" />
-                    {receiptHeading}
-                  </CardTitle>
-                  <CardDescription className="text-[#98c1d9]">
-                    {new Date().toLocaleDateString("en-US", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </CardDescription>
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  <Select value={salesTimeframe} onValueChange={(value) => setSalesTimeframe(value)}>
-                    <SelectTrigger className="w-[180px] bg-[#293241] text-white border-[#98c1d9]/30">
-                      <SelectValue placeholder="Select timeframe" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#293241] text-white">
-                      <SelectItem value="day">Today</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                      <SelectItem value="year">This Year</SelectItem>
-                      <SelectItem value="custom">Others...</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {salesTimeframe === 'custom' && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <input 
-                        type="number" 
-                        min="1" 
-                        className="border rounded p-1 w-16 text-black"
-                        value={customValue}
-                        onChange={(e) => setCustomValue(Math.max(1, parseInt(e.target.value) || 1))}
-                      />
-                      <select 
-                        value={customUnit} 
-                        onChange={(e) => setCustomUnit(e.target.value)}
-                        className="border rounded p-1 text-black"
-                      >
-                        <option value="days">Days Ago</option>
-                        <option value="months">Months Ago</option>
-                        <option value="years">Years Ago</option>
-                      </select>
+              <div className="space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-[#ee6c4d]" />
+                    <div>
+                      <CardTitle className="text-[#e0fbfc]">Customer Account Creator</CardTitle>
+                      <CardDescription className="text-[#98c1d9]">
+                        Create and manage customer login profiles from the admin portal.
+                      </CardDescription>
                     </div>
-                  )}
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
+                    onClick={() => setShowAddCustomer(!showAddCustomer)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    {showAddCustomer ? "Hide Creator" : "Show Creator"}
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
+                    <p className="text-xs uppercase tracking-widest text-[#98c1d9]">Total Customers</p>
+                    <p className="text-2xl font-bold text-[#e0fbfc]">{safeCustomers.length}</p>
+                  </div>
+                  <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
+                    <p className="text-xs uppercase tracking-widest text-[#98c1d9]">Restricted Accounts</p>
+                    <p className="text-2xl font-bold text-[#ee6c4d]">{safeCustomers.filter((c) => c.standing === "restricted").length}</p>
+                  </div>
+                  <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
+                    <Label className="text-xs uppercase tracking-widest text-[#98c1d9] mb-2 block">Search by ID or name</Label>
+                    <Input
+                      placeholder="Search accounts by name or ID..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-[#1f2b3a] border-[#98c1d9]/20 text-[#e0fbfc]"
+                    />
+                  </div>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              {activeSalesItems.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-[#98c1d9]/30">
-                        <TableHead className="text-[#98c1d9]">Customer</TableHead>
-                        <TableHead className="text-[#98c1d9]">Item</TableHead>
-                        <TableHead className="text-right text-[#98c1d9]">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activeSalesItems.map((sale) => (
-                        <TableRow key={sale.id} className="border-[#98c1d9]/30">
-                          <TableCell className="text-[#e0fbfc]">{sale.customerName}</TableCell>
-                          <TableCell className="text-[#98c1d9]">{sale.item}</TableCell>
-                          <TableCell className="text-right text-[#ee6c4d] font-medium">
-                            P{sale.amount.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#98c1d9]/30">
-                    <span className="text-[#e0fbfc] font-bold">Total</span>
-                    <span className="text-[#ee6c4d] font-bold text-xl">
-                      P{totalSalesToday.toFixed(2)}
-                    </span>
+            <CardContent className="space-y-6">
+              {showAddCustomer && (
+                <div className="bg-[#293241] p-4 rounded-lg border border-[#98c1d9]/20 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[#e0fbfc]">Full Profile Name</Label>
+                      <Input
+                        value={newCustomer.name}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                        placeholder="John Dela Cruz"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[#e0fbfc]">Mobile / Phone Number</Label>
+                      <Input
+                        value={newCustomer.phone}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                        placeholder="0912 345 6789"
+                      />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Receipt className="h-12 w-12 text-[#98c1d9]/50 mx-auto mb-4" />
-                  <p className="text-[#98c1d9]">No sales recorded for this timeframe</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[#e0fbfc]">Account Username</Label>
+                      <Input
+                        value={newCustomer.username}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, username: e.target.value })}
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                        placeholder="customer.username"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[#e0fbfc]">Account Password</Label>
+                      <Input
+                        type="password"
+                        value={newCustomer.password}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, password: e.target.value })}
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                        placeholder="password"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full bg-green-500 hover:bg-green-600 text-white"
+                    onClick={handleAddCustomer}
+                  >
+                    Add Customer Account
+                  </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-        )}
 
-        {/* Customer Timeline Status Legend */}
-        <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-8">
-          <CardHeader>
-            <CardTitle className="text-[#e0fbfc]">Timeline Status Legend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <span className="text-sm text-[#e0fbfc]">Unpaid</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                <span className="text-sm text-[#e0fbfc]">Overdue</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-                <span className="text-sm text-[#e0fbfc]">Fully Paid</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Customer Account Creator */}
-        <Card className="bg-[#3d5a80] border-[#98c1d9]/30 mt-8">
-          <CardHeader>
-            <div className="space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-[#ee6c4d]" />
-                  <div>
-                    <CardTitle className="text-[#e0fbfc]">Customer Account Creator</CardTitle>
-                    <CardDescription className="text-[#98c1d9]">
-                      Create and manage customer login profiles from the admin portal.
-                    </CardDescription>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
-                  onClick={() => setShowAddCustomer(!showAddCustomer)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  {showAddCustomer ? "Hide Creator" : "Show Creator"}
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
-                  <p className="text-xs uppercase tracking-widest text-[#98c1d9]">Total Customers</p>
-                  <p className="text-2xl font-bold text-[#e0fbfc]">{safeCustomers.length}</p>
-                </div>
-                <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
-                  <p className="text-xs uppercase tracking-widest text-[#98c1d9]">Restricted Accounts</p>
-                  <p className="text-2xl font-bold text-[#ee6c4d]">{safeCustomers.filter((c) => c.standing === "restricted").length}</p>
-                </div>
-                <div className="bg-[#293241] rounded-lg p-4 border border-[#98c1d9]/20">
-                  <Label className="text-xs uppercase tracking-widest text-[#98c1d9] mb-2 block">Search by ID or name</Label>
-                  <Input
-                    placeholder="Search accounts by name or ID..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-[#1f2b3a] border-[#98c1d9]/20 text-[#e0fbfc]"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {showAddCustomer && (
-              <div className="bg-[#293241] p-4 rounded-lg border border-[#98c1d9]/20 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[#e0fbfc]">Full Profile Name</Label>
-                    <Input
-                      value={newCustomer.name}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
-                      className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
-                      placeholder="John Dela Cruz"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[#e0fbfc]">Mobile / Phone Number</Label>
-                    <Input
-                      value={newCustomer.phone}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-                      className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
-                      placeholder="0912 345 6789"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[#e0fbfc]">Account Username</Label>
-                    <Input
-                      value={newCustomer.username}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, username: e.target.value })}
-                      className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
-                      placeholder="customer.username"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[#e0fbfc]">Account Password</Label>
-                    <Input
-                      type="password"
-                      value={newCustomer.password}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, password: e.target.value })}
-                      className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
-                      placeholder="password"
-                    />
-                  </div>
-                </div>
-                <Button
-                  className="w-full bg-green-500 hover:bg-green-600 text-white"
-                  onClick={handleAddCustomer}
-                >
-                  Add Customer Account
-                </Button>
-              </div>
-            )}
-
-            <div className="max-h-96 overflow-y-auto space-y-3">
-              {filteredCustomers.length === 0 ? (
-                <div className="p-4 bg-[#1d2430] rounded-lg text-[#98c1d9]">No accounts match the search.</div>
-              ) : (
-                filteredCustomers.map((customer) => (
-                  <div
-                    key={customer.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-[#293241] rounded-lg border border-[#98c1d9]/20"
-                  >
-                    <div>
-                      <p className="text-[#e0fbfc] font-semibold">{customer.name}</p>
-                      <p className="text-xs text-[#98c1d9]">{customer.id}</p>
-                      <p className="text-xs text-[#98c1d9]">{customer.phone || "No phone set"}</p>
-                      <p className="text-xs text-[#98c1d9]">{customer.username || "No username set"}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-[#98c1d9] hover:text-[#ee6c4d]"
-                        onClick={() => startEditingCustomer(customer)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={customer.standing === "good"}
-                          onCheckedChange={(checked) => handleStandingToggle(customer.id, checked ? "good" : "restricted")}
-                        />
-                        <span className="text-sm text-[#e0fbfc]">
-                          {customer.standing === "good" ? "Good Standing" : "Restricted Account"}
-                        </span>
+              <div className="max-h-96 overflow-y-auto space-y-3">
+                {filteredCustomers.length === 0 ? (
+                  <div className="p-4 bg-[#1d2430] rounded-lg text-[#98c1d9]">No accounts match the search.</div>
+                ) : (
+                  filteredCustomers.map((customer) => (
+                    <div
+                      key={customer.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-[#293241] rounded-lg border border-[#98c1d9]/20"
+                    >
+                      <div>
+                        <p className="text-[#e0fbfc] font-semibold">{customer.name}</p>
+                        <p className="text-xs text-[#98c1d9]">{customer.id}</p>
+                        <p className="text-xs text-[#98c1d9]">{customer.phone || "No phone set"}</p>
+                        <p className="text-xs text-[#98c1d9]">{customer.username || "No username set"}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-[#98c1d9] hover:text-[#ee6c4d]"
+                          onClick={() => startEditingCustomer(customer)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={customer.standing === "good"}
+                            onCheckedChange={(checked) => handleStandingToggle(customer.id, checked ? "good" : "restricted")}
+                          />
+                          <span className="text-sm text-[#e0fbfc]">
+                            {customer.standing === "good" ? "Good Standing" : "Restricted Account"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {customerEditModalOpen && editingCustomer && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
             <div className="w-full max-w-2xl bg-[#1e2530] border border-[#3d5a80] rounded-3xl p-6 shadow-2xl text-white">
@@ -1594,7 +1545,10 @@ export function AdminDashboard({
 
                   <Button
                     className="w-full bg-green-500 hover:bg-green-600 text-white"
-                    onClick={handleSavePenaltyFee}
+                    onClick={() => {
+                      setPenaltyFeePercentage(tempPenaltyFee)
+                      setEditingPenaltyFee(false)
+                    }}
                   >
                     <Check className="h-4 w-4 mr-2" />
                     Save Penalty Fee Policy
@@ -1626,13 +1580,14 @@ export function AdminDashboard({
                   </div>
                 </div>
               )}
-            </CardContent>
+           </CardContent>
           </Card>
         </div>
-        )}
-          </main>
-        </div>
-      </div>
-    </section>
+      )}
+
+      </main>
+    </div>
+  </div>
+</section>
   )
 }

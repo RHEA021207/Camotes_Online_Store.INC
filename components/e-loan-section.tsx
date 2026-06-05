@@ -61,17 +61,17 @@ export function ELoanSection({ trustScore, onAddToCart, onInquire, onBack, isFul
           .from('store_services')
           .select('*')
           .eq('category', 'e-loan')
-          .single()
+          .maybeSingle()
 
         if (error) {
-          console.error('Error fetching e-loan service:', error)
+          console.error('Error fetching e-loan service:', error.message || error)
         } else if (data) {
           // You can extend store_services table to include loan amounts
           // For now, we keep the default loanAmounts
           console.log('E-loan service fetched:', data)
         }
       } catch (err) {
-        console.error('Supabase fetch error:', err)
+        console.error('Supabase fetch error:', (err as Error).message || err)
       } finally {
         setLoading(false)
       }
@@ -130,11 +130,10 @@ export function ELoanSection({ trustScore, onAddToCart, onInquire, onBack, isFul
         {isFullPage && onBack && (
           <Button
             variant="ghost"
-            className="text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#3d5a80] mb-6"
+            className="text-[#e0fbfc] hover:text-[#98c1d9] hover:bg-[#3d5a80] mb-6 p-2 rounded-full"
             onClick={onBack}
           >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Home
+            <ArrowLeft className="h-5 w-5" />
           </Button>
         )}
 
@@ -146,9 +145,9 @@ export function ELoanSection({ trustScore, onAddToCart, onInquire, onBack, isFul
           Quick cash loans with flexible payment options
         </p>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {/* Loan Selection */}
-          <Card className="bg-[#3d5a80] border-[#98c1d9]/30">
+          <Card className="bg-[#3d5a80] border-[#98c1d9]/30 lg:col-span-2 p-4 sm:p-6">
             <CardHeader>
               <CardTitle className="text-[#e0fbfc]">Select Loan Amount</CardTitle>
               <CardDescription className="text-[#98c1d9]">
@@ -162,7 +161,7 @@ export function ELoanSection({ trustScore, onAddToCart, onInquire, onBack, isFul
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {loanAmountsList.map((loan) => {
                   const isAccessible = canAccessAmount(loan.minTrust)
                   return (
@@ -197,7 +196,7 @@ export function ELoanSection({ trustScore, onAddToCart, onInquire, onBack, isFul
               <div className="space-y-2">
                 <Label className="text-[#e0fbfc]">Payment Frequency</Label>
                 <Select value={selectedFrequency} onValueChange={setSelectedFrequency}>
-                  <SelectTrigger className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                  <SelectTrigger className="w-full bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
                     <SelectValue placeholder="Select frequency" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#3d5a80] border-[#98c1d9]">
@@ -228,7 +227,7 @@ export function ELoanSection({ trustScore, onAddToCart, onInquire, onBack, isFul
                     }
                   }}
                 >
-                  <SelectTrigger className="bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
+                  <SelectTrigger className="w-full bg-[#293241] border-[#98c1d9]/30 text-[#e0fbfc]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#3d5a80] border-[#98c1d9] max-h-64">
@@ -255,19 +254,19 @@ export function ELoanSection({ trustScore, onAddToCart, onInquire, onBack, isFul
               {useCustomTerm && (
                 <div className="space-y-3 p-4 bg-[#293241] rounded-lg">
                   <Label className="text-[#e0fbfc]">Custom Duration</Label>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row">
                     <Input
                       type="number"
                       placeholder="Enter value"
                       value={customTermValue}
                       onChange={(e) => setCustomTermValue(e.target.value)}
-                      className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] flex-1"
+                      className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc] w-full"
                       min={1}
                     />
                     <RadioGroup
                       value={customTermType}
                       onValueChange={(v) => setCustomTermType(v as "months" | "days")}
-                      className="flex gap-4"
+                      className="flex flex-col gap-3 sm:flex-row"
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="months" id="months" className="border-[#98c1d9] text-[#ee6c4d]" />
@@ -290,7 +289,7 @@ export function ELoanSection({ trustScore, onAddToCart, onInquire, onBack, isFul
           </Card>
 
           {/* Loan Summary */}
-          <Card className="bg-[#3d5a80] border-[#98c1d9]/30">
+          <Card className="bg-[#3d5a80] border-[#98c1d9]/30 p-4 sm:p-6">
             <CardHeader>
               <CardTitle className="text-[#e0fbfc]">Loan Summary</CardTitle>
               <CardDescription className="text-[#98c1d9]">
