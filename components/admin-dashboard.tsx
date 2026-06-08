@@ -123,7 +123,7 @@ export function AdminDashboard({
   const [showAddProductForm, setShowAddProductForm] = useState(false)
   const [newProdName, setNewProdName] = useState("")
   const [newProdDesc, setNewProdDesc] = useState("")
-  const [newProdCat, setNewProdCat] = useState<"e-loan" | "bugas" | "snacks" | "gadgets" | "appliances" | "sangla">("e-loan")
+  const [newProdCat, setNewProdCat] = useState<string>(categoryConfigs[0]?.categoryKey || "e-loan")
   const [newProdPrice, setNewProdPrice] = useState<number>(0)
   const [newProdDeliveryFee, setNewProdDeliveryFee] = useState<number>(0)
   const [newProdStockStatus, setNewProdStockStatus] = useState<"available" | "out_of_stock" | "sold_out">("available")
@@ -149,16 +149,17 @@ export function AdminDashboard({
   const [activeStatFilter, setActiveStatFilter] = useState("all")
 
   // Category management state
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryConfigs[0]?.categoryKey || "e-loan")
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryConfigs[0]?.categoryKey || categoryConfigs[0]?.categoryName || null)
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
   const [editingCategoryData, setEditingCategoryData] = useState<Partial<CategoryConfig> | null>(null)
-  const [addingNewCategoryItem, setAddingNewCategoryItem] = useState(false)
-  const [newItemName, setNewItemName] = useState("")
-  const [newItemAmount, setNewItemAmount] = useState(0)
-  const [newItemDescription, setNewItemDescription] = useState("")
+  const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
+  const [newCategoryKey, setNewCategoryKey] = useState("")
+  const [newCategoryName, setNewCategoryName] = useState("")
+  const [newCategoryDesc, setNewCategoryDesc] = useState("")
+  const [newCategoryMin, setNewCategoryMin] = useState<number>(0)
+  const [newCategoryMax, setNewCategoryMax] = useState<number>(0)
+  const [newCategoryFee, setNewCategoryFee] = useState<number>(0)
 
-  // Form states for creating a whole new service / category card
-const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
   const categoryLabels: Record<string, string> = {
     bugas: "Bugas",
     snacks: "Snacks",
@@ -260,27 +261,29 @@ const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
 
   const uploadProductImage = async (file: File) => {
     setImageUploadError("")
-    const sanitizedFilename = `${crypto.randomUUID()}-${file.name.replace(/\s+/g, "-")}`
-    const storagePath = `products/${sanitizedFilename}`
 
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(storagePath, file, {
-        cacheControl: '3600',
-        upsert: true,
-      })
+    try {
+      const { data, error } = await supabase
+        .storage
+        .from('product-images')
+        .upload(`public/${Date.now()}_${file.name}`, file)
 
-    if (uploadError) {
-      console.error('Supabase storage upload error:', uploadError)
+      if (error) {
+        console.error('Supabase storage upload error:', error)
+        setImageUploadError('Unable to upload image. Please try again.')
+        return null
+      }
+
+      const publicUrlResult = supabase.storage
+        .from('product-images')
+        .getPublicUrl(data.path)
+
+      return publicUrlResult.data?.publicUrl || null
+    } catch (err) {
+      console.error('Error uploading image to Supabase:', err)
       setImageUploadError('Unable to upload image. Please try again.')
       return null
     }
-
-    const { data: publicUrlData } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(storagePath)
-
-    return publicUrlData?.publicUrl || null
   }
 
   const updateProductImageRecord = async (product: ProductItem, imageUrl: string) => {
@@ -288,7 +291,7 @@ const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
 
     const { data, error } = await supabase
       .from('store_services')
-      .update({ image: imageUrl })
+      .update({ image_url: imageUrl })
       .select('id')
       .eq('id', product.id)
 
@@ -300,7 +303,7 @@ const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
     if (!data || data.length === 0) {
       const { error: fallbackError } = await supabase
         .from('store_services')
-        .update({ image: imageUrl })
+        .update({ image_url: imageUrl })
         .match({ name: product.name, category: product.category })
 
       if (fallbackError) {
@@ -309,7 +312,7 @@ const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
     }
   }
 
-  const handleCreateNewProduct = async () => {
+  const handleCreateProduct = async () => {
     if (!newProdName.trim() || !newProdDesc.trim()) return
 
     let imageUrl: string | null = null
@@ -321,7 +324,7 @@ const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
       name: newProdName,
       description: newProdDesc,
       category: newProdCat,
-      image: imageUrl || null,
+      image_url: imageUrl || null,
       price: newProdPrice || 0,
       delivery_fee: newProdDeliveryFee || 0,
       stock_status: newProdStockStatus,
@@ -330,25 +333,32 @@ const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
     }
 
     if (editingProductId) {
+      const existingProduct = products.find((prod) => prod.id === editingProductId)
+      const updateFields: any = {
+        name: newProdName,
+        description: newProdDesc,
+        category: newProdCat,
+        price: newProdPrice || 0,
+        delivery_fee: newProdDeliveryFee || 0,
+        stock_status: newProdStockStatus,
+        brand: newProdBrand || null,
+      }
+
+      if (imageUrl !== null) {
+        updateFields.image_url = imageUrl
+      }
+
       await supabase
         .from('store_services')
-        .update({
-          name: newProdName,
-          description: newProdDesc,
-          category: newProdCat,
-          image: imageUrl || null,
-          price: newProdPrice || 0,
-          delivery_fee: newProdDeliveryFee || 0,
-          stock_status: newProdStockStatus,
-          brand: newProdBrand || null,
-        })
+        .update(updateFields)
         .eq('id', editingProductId)
 
+      // Optimistically update local context state
       updateProduct(editingProductId, {
         name: newProdName,
         description: newProdDesc,
         category: newProdCat,
-        image: imageUrl || undefined,
+        image: imageUrl !== null ? imageUrl : existingProduct?.image,
         price: newProdPrice,
         deliveryFee: newProdDeliveryFee,
         stockStatus: newProdStockStatus,
@@ -418,6 +428,176 @@ const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
       handleNewProductFileChange(file)
     }
   }
+
+  const handleCreateCategory = async () => {
+    const normalizedKey = newCategoryKey
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+
+    if (!normalizedKey || !newCategoryName.trim()) {
+      return
+    }
+
+    const categoryPayload = {
+      category_key: normalizedKey,
+      category_name: newCategoryName.trim(),
+      min_amount: newCategoryMin || 0,
+      max_amount: newCategoryMax || 0,
+      delivery_fee: newCategoryFee || 0,
+      description: newCategoryDesc.trim() || null,
+      updated_at: new Date().toISOString(),
+    }
+
+    addCategoryConfig({
+      categoryKey: normalizedKey,
+      categoryName: newCategoryName.trim(),
+      minAmount: newCategoryMin || 0,
+      maxAmount: newCategoryMax || 0,
+      deliveryFee: newCategoryFee || 0,
+      description: newCategoryDesc.trim() || undefined,
+      items: [],
+    })
+
+    try {
+      const { error } = await supabase
+        .from('category_configs')
+        .upsert([categoryPayload], { onConflict: 'category_key' })
+
+      if (error) {
+        console.warn('Could not persist new category config to Supabase:', error)
+      }
+    } catch (err) {
+      console.error('Error persisting category config:', err)
+    }
+
+    setSelectedCategory(normalizedKey)
+    setShowAddCategoryForm(false)
+    setNewCategoryKey("")
+    setNewCategoryName("")
+    setNewCategoryDesc("")
+    setNewCategoryMin(0)
+    setNewCategoryMax(0)
+    setNewCategoryFee(0)
+  }
+
+  // Update an existing product row (called from inline edits)
+  const handleUpdateProductItem = async (productId: string, updates: Partial<ProductItem>) => {
+    try {
+      const dbUpdate: any = {}
+      if (updates.name !== undefined) dbUpdate.name = updates.name
+      if (updates.description !== undefined) dbUpdate.description = updates.description
+      if (updates.price !== undefined) dbUpdate.price = updates.price
+      if ((updates as any).deliveryFee !== undefined) dbUpdate.delivery_fee = (updates as any).deliveryFee
+      if ((updates as any).stockStatus !== undefined) dbUpdate.stock_status = (updates as any).stockStatus
+      if ((updates as any).brand !== undefined) dbUpdate.brand = (updates as any).brand
+
+      if (Object.keys(dbUpdate).length === 0) return
+
+      const { error } = await supabase.from('store_services').update(dbUpdate).eq('id', productId)
+      if (error) {
+        console.error('Failed to update product in Supabase:', error)
+      } else {
+        // Reflect change locally
+        updateProduct(productId, {
+          ...updates,
+          deliveryFee: (updates as any).deliveryFee,
+        })
+      }
+    } catch (err) {
+      console.error('Error in handleUpdateProductItem:', err)
+    }
+  }
+
+  // Update the category header/config (persist locally and attempt DB upsert)
+  const handleUpdateCategoryHeader = async (categoryKey: string, config: Partial<CategoryConfig>) => {
+    try {
+      // Update local context first for immediate UX
+      updateCategoryConfig(categoryKey, config)
+
+      // Try to persist to a dedicated category_configs table (if present)
+      const payload: any = {
+        category_key: categoryKey,
+        category_name: config.categoryName || null,
+        min_amount: config.minAmount ?? null,
+        max_amount: config.maxAmount ?? null,
+        delivery_fee: config.deliveryFee ?? null,
+        description: config.description ?? null,
+        items: config.items ?? null,
+        updated_at: new Date().toISOString(),
+      }
+
+      const { error } = await supabase
+        .from('category_configs')
+        .upsert([payload], { onConflict: 'category_key' })
+
+      if (error) {
+        // If table doesn't exist or upsert fails, log the issue but keep local state
+        console.warn('Could not persist category config to Supabase (table may not exist):', error)
+      }
+    } catch (err) {
+      console.error('Error in handleUpdateCategoryHeader:', err)
+    }
+  }
+
+// Supabase realtime subscription to keep local products in sync
+  useEffect(() => {
+    // 1. Declare out here so the inner subscription and cleanup return block can both read it!
+    let activeChannel: any = null
+
+    try {
+      activeChannel = supabase.channel('public:store_services')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'store_services' }, (payload: any) => {
+          try {
+            const ev = payload.eventType || payload.event
+            const record = payload.new || payload.record || payload.data
+            if (!record) return
+
+            const transformed = {
+              id: record.id?.toString() || String(record.id),
+              name: record.name,
+              description: record.description,
+              category: record.category,
+              image: record.image || undefined,
+              price: record.price ?? 0,
+              deliveryFee: record.delivery_fee ?? 0,
+              stockStatus: record.stock_status ?? 'available',
+              brand: record.brand ?? undefined,
+            }
+
+            if (ev === 'INSERT' || ev === 'postgres_changes' && payload.type === 'INSERT') {
+              addProduct(transformed)
+            } else if (ev === 'UPDATE' || ev === 'postgres_changes' && payload.type === 'UPDATE') {
+              updateProduct(transformed.id, transformed)
+            } else if (ev === 'DELETE' || ev === 'postgres_changes' && payload.type === 'DELETE') {
+              deleteProduct(record.id?.toString())
+            }
+          } catch (err) {
+            console.error('Error handling realtime payload for store_services:', err)
+          }
+        })
+        .subscribe()
+    } catch (err) {
+      console.warn('Realtime subscription could not be established:', err)
+    }
+
+    // 2. Clear, error-free return check to fix the "TypeError: Cannot read properties of null (reading 'unsubscribe')"
+    return () => {
+      try {
+        if (activeChannel) {
+          if (typeof activeChannel.unsubscribe === 'function') {
+            activeChannel.unsubscribe()
+          }
+          if (supabase && typeof supabase.removeChannel === 'function') {
+            supabase.removeChannel(activeChannel)
+          }
+        }
+      } catch (err) {
+        console.error("Error during activeChannel unsubscribe cleanup:", err)
+      }
+    }
+  }, [addProduct, updateProduct, deleteProduct])
 
   const handleProductImageUpload = async (file: File, product: ProductItem) => {
     setUploadingProductId(product.id)
@@ -862,287 +1042,280 @@ return (
                   Unified Inventory Editor
                 </CardTitle>
                 <CardDescription className="text-[#98c1d9]">
-                  Edit service category headers, manage inventory items, and update product fields from one panel.
+                  Add categories, manage inventory items, and update product details from one panel.
                 </CardDescription>
               </div>
-              <Button
-                onClick={() => setShowAddProductForm(!showAddProductForm)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
-              >
-                <Plus className="h-3.5 w-3.5 mr-1" /> {showAddProductForm ? 'Hide' : 'Add New Product'}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => setShowAddCategoryForm((prev) => !prev)}
+                  className="bg-[#ee6c4d] hover:bg-[#d65a31] text-white text-xs font-bold"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> {showAddCategoryForm ? 'Hide Category Form' : ' Add Category'}
+                </Button>
+                <Button
+                  onClick={() => setShowAddProductForm((prev) => !prev)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> {showAddProductForm ? 'Hide' : 'Add New Product'}
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 gap-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                  {categoryConfigs.map((cat) => (
-                    <Button
-                      key={cat.categoryKey}
-                      onClick={() => {
-                        setSelectedCategory(cat.categoryKey)
-                        setEditingCategoryId(null)
-                        setEditingCategoryData(null)
-                      }}
-                      className={`text-xs font-bold h-auto py-2 ${
-                        selectedCategory === cat.categoryKey
-                          ? 'bg-[#ee6c4d] text-white'
-                          : 'bg-[#293241] text-[#98c1d9] hover:bg-[#3d5a80]'
-                      }`}
-                    >
-                      {categoryLabels[cat.categoryKey] || cat.categoryName}
-                    </Button>
-                  ))}
-                </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                {categoryConfigs.map((cat) => (
+                  <Button
+                    key={cat.categoryKey}
+                    onClick={() => {
+                      setSelectedCategory(cat.categoryKey)
+                      setEditingCategoryId(null)
+                      setEditingCategoryData(null)
+                    }}
+                    className={`text-xs font-bold h-auto py-2 ${
+                      selectedCategory === cat.categoryKey
+                        ? 'bg-[#ee6c4d] text-white'
+                        : 'bg-[#293241] text-[#98c1d9] hover:bg-[#3d5a80]'
+                    }`}
+                  >
+                    {categoryLabels[cat.categoryKey] || cat.categoryName}
+                  </Button>
+                ))}
+              </div>
 
-                <div className="rounded-3xl border border-[#98c1d9]/20 bg-[#293241] p-5">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              {showAddCategoryForm && (
+                <div className="rounded-3xl border border-[#98c1d9]/20 bg-[#1d2430] p-5">
+                  <div className="grid gap-4 lg:grid-cols-2">
                     <div>
-                      <p className="text-xs uppercase tracking-wider text-[#98c1d9]">Service Header</p>
-                      <h3 className="text-2xl font-semibold text-[#e0fbfc]">{categoryLabels[selectedCategory ?? 'snacks'] || 'Category'} Services</h3>
-                      <p className="mt-2 text-sm text-[#98c1d9]">
-                        Update the current category display header, pricing rules, and description in one place.
-                      </p>
+                      <Label className="text-[#98c1d9] text-xs">Category Key</Label>
+                      <Input
+                        value={newCategoryKey}
+                        onChange={(e) => setNewCategoryKey(e.target.value)}
+                        placeholder="e.g. car-rent"
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                      />
                     </div>
-                   <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white" onClick={() => { const activeConfig = categoryConfigs.find(c => c.categoryKey === selectedCategory); setEditingCategoryId(selectedCategory); setEditingCategoryData(activeConfig ? { ...activeConfig } : {}); }}>
-                      <Edit2 className="h-4 w-4 mr-1" /> Edit Header
+                    <div>
+                      <Label className="text-[#98c1d9] text-xs">Category Name</Label>
+                      <Input
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="e.g. Car Rent"
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[#98c1d9] text-xs">Min Amount</Label>
+                      <Input
+                        type="number"
+                        value={newCategoryMin}
+                        onChange={(e) => setNewCategoryMin(Number(e.target.value))}
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[#98c1d9] text-xs">Max Amount</Label>
+                      <Input
+                        type="number"
+                        value={newCategoryMax}
+                        onChange={(e) => setNewCategoryMax(Number(e.target.value))}
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[#98c1d9] text-xs">Delivery Fee</Label>
+                      <Input
+                        type="number"
+                        value={newCategoryFee}
+                        onChange={(e) => setNewCategoryFee(Number(e.target.value))}
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                      />
+                    </div>
+                    <div className="lg:col-span-2">
+                      <Label className="text-[#98c1d9] text-xs">Description</Label>
+                      <Textarea
+                        value={newCategoryDesc}
+                        onChange={(e) => setNewCategoryDesc(e.target.value)}
+                        rows={3}
+                        placeholder="Short description for this category"
+                        className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button variant="outline" className="text-slate-200" onClick={() => setShowAddCategoryForm(false)}>
+                      Cancel
+                    </Button>
+                    <Button className="bg-[#ee6c4d] hover:bg-[#d65a31] text-white" onClick={handleCreateCategory}>
+                      Create Category
                     </Button>
                   </div>
+                </div>
+              )}
 
-                 {editingCategoryId === selectedCategory && editingCategoryData ?
- ( <div className="mt-5 space-y-6 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4">
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                        <div>
-                          <Label className="text-[#98c1d9] text-xs">Service Name</Label>
-                          <Input
-                            value={editingCategoryData.categoryName || ''}
-                            onChange={(e) => setEditingCategoryData({ ...editingCategoryData, categoryName: e.target.value })}
-                            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[#98c1d9] text-xs">Min Amount</Label>
-                          <Input
-                            type="number"
-                            value={editingCategoryData.minAmount}
-                            onChange={(e) => setEditingCategoryData({ ...editingCategoryData, minAmount: parseInt(e.target.value) || 0 })}
-                            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[#98c1d9] text-xs">Max Amount</Label>
-                          <Input
-                            type="number"
-                            value={editingCategoryData.maxAmount}
-                            onChange={(e) => setEditingCategoryData({ ...editingCategoryData, maxAmount: parseInt(e.target.value) || 0 })}
-                            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
-                          />
-                        </div>
+              <div className="rounded-3xl border border-[#98c1d9]/20 bg-[#293241] p-5">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-[#98c1d9]">Service Header</p>
+                    <h3 className="text-2xl font-semibold text-[#e0fbfc]">
+                      {categoryLabels[selectedCategory ?? 'snacks'] || categoryConfigs.find((c) => c.categoryKey === selectedCategory)?.categoryName || 'Category'} Services
+                    </h3>
+                    <p className="mt-2 text-sm text-[#98c1d9]">
+                      Update selected category metadata and view products filtered by this category.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white"
+                    onClick={() => {
+                      const activeConfig = categoryConfigs.find((c) => c.categoryKey === selectedCategory)
+                      setEditingCategoryId(selectedCategory)
+                      setEditingCategoryData(activeConfig ? { ...activeConfig } : {})
+                    }}
+                  >
+                    <Edit2 className="h-4 w-4 mr-1" /> Edit Header
+                  </Button>
+                </div>
+
+                {editingCategoryId === selectedCategory && editingCategoryData ? (
+                  <div className="mt-5 space-y-6 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-[#98c1d9] text-xs">Service Name</Label>
+                        <Input
+                          value={editingCategoryData.categoryName || ''}
+                          onChange={(e) => setEditingCategoryData({ ...editingCategoryData, categoryName: e.target.value })}
+                          className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                        />
                       </div>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-[#98c1d9] text-xs">Delivery Fee</Label>
-                          <Input
-                            type="number"
-                            value={editingCategoryData.deliveryFee}
-                            onChange={(e) => setEditingCategoryData({ ...editingCategoryData, deliveryFee: parseInt(e.target.value) || 0 })}
-                            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[#98c1d9] text-xs">Service Description</Label>
-                          <Textarea
-                            value={editingCategoryData.description || ''}
-                            onChange={(e) => setEditingCategoryData({ ...editingCategoryData, description: e.target.value })}
-                            className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
-                            rows={3}
-                          />
-                        </div>
+                      <div>
+                        <Label className="text-[#98c1d9] text-xs">Min Amount</Label>
+                        <Input
+                          type="number"
+                          value={editingCategoryData.minAmount}
+                          onChange={(e) => setEditingCategoryData({ ...editingCategoryData, minAmount: parseInt(e.target.value) || 0 })}
+                          className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                        />
                       </div>
-
-                      <div className="rounded-3xl border border-[#98c1d9]/20 bg-[#293241] p-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
-                          <div>
-                            <p className="text-sm font-semibold text-[#e0fbfc]">Category Item Manager</p>
-                            <p className="text-xs text-[#98c1d9]">Edit, delete, or add specific sub-products for this category.</p>
-                          </div>
-                          <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white" onClick={() => setAddingNewCategoryItem((prev) => !prev)}>
-                            <Plus className="h-4 w-4 mr-1" /> {addingNewCategoryItem ? 'Hide New Item Form' : '＋ Add New Item'}
-                          </Button>
-                        </div>
-
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="border-[#98c1d9]/30">
-                              <TableHead className="text-[#98c1d9]">Item Name</TableHead>
-                              <TableHead className="text-[#98c1d9]">Price</TableHead>
-                              <TableHead className="text-[#98c1d9]">Description</TableHead>
-                              <TableHead className="text-[#98c1d9] text-right">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {(editingCategoryData?.items || []).length > 0 ? (
-                              (editingCategoryData?.items || []).map((item: any, index: number) => (
-                                <TableRow key={item.id || item.name || index} className="border-t border-[#98c1d9]/10">
-        <TableCell className="p-2">
-          <Input 
-            value={item.name || ''} 
-            onChange={(e) => {
-              setEditingCategoryData((prev: any) => {
-                const updated = [...(prev.items || [])];
-                updated[index] = { ...updated[index], name: e.target.value };
-                return { ...prev, items: updated };
-              });
-            }} 
-            className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]" 
-            placeholder="Item name" 
-          />
-        </TableCell>
-        <TableCell className="p-2">
-          <Input 
-            type="number" 
-            value={item.amount ?? ''} 
-            onChange={(e) => {
-              setEditingCategoryData((prev: any) => {
-                const updated = [...(prev.items || [])];
-                updated[index] = { ...updated[index], amount: parseInt(e.target.value) || 0 };
-                return { ...prev, items: updated };
-              });
-            }} 
-            className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]" 
-            placeholder="Price" 
-          />
-        </TableCell>
-        <TableCell className="p-2">
-          <Input 
-            value={item.description || ''} 
-            onChange={(e) => {
-              setEditingCategoryData((prev: any) => {
-                const updated = [...(prev.items || [])];
-                updated[index] = { ...updated[index], description: e.target.value };
-                return { ...prev, items: updated };
-              });
-            }} 
-            className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]" 
-            placeholder="Unit or description" 
-          />
-        </TableCell>
-        <TableCell className="p-2 text-right">
-          <Button 
-            size="sm" 
-            variant="ghost" 
-            className="text-[#ee6c4d] hover:text-red-400" 
-            onClick={() => {
-              setEditingCategoryData((prev: any) => ({
-                ...prev,
-                items: (prev.items || []).filter((_: any, i: number) => i !== index)
-              }));
-            }} 
-          />
-        </TableCell>
-      </TableRow>
-    ))
-  ) : (
-                              <TableRow>
-                                <TableCell colSpan={4} className="py-6 text-center text-sm text-[#98c1d9]">
-                                  No category items yet. Add a new item to expand this catalog.
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-
-                        {addingNewCategoryItem && (
-                          <div className="mt-4 space-y-3">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                              <div>
-                                <Label className="text-[#98c1d9] text-xs">New Item Name</Label>
-                                <Input
-                                  value={newItemName}
-                                  onChange={(e) => setNewItemName(e.target.value)}
-                                  className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
-                                  placeholder="e.g. Wash & Fold"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-[#98c1d9] text-xs">Price / Rate</Label>
-                                <Input
-                                  type="number"
-                                  value={newItemAmount}
-                                  onChange={(e) => setNewItemAmount(Number(e.target.value))}
-                                  className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
-                                  placeholder="e.g. 150"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-[#98c1d9] text-xs">Unit / Description</Label>
-                                <Input
-                                  value={newItemDescription}
-                                  onChange={(e) => setNewItemDescription(e.target.value)}
-                                  className="bg-[#1d2430] border-[#98c1d9]/30 text-[#e0fbfc]"
-                                  placeholder="e.g. per kg"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex justify-end">
-                             <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#ee6c4d]/80 text-white" onClick={() => {
-  setEditingCategoryData((prev: any) => ({
-    ...prev,
-    items: [...(prev?.items || []), { name: "", amount: 0, description: "" }]
-  }));
-}}>
-  <Plus className="h-4 w-4 mr-1" /> Add Item
-</Button>
-                            </div>
-                          </div>
-                        )}
+                      <div>
+                        <Label className="text-[#98c1d9] text-xs">Max Amount</Label>
+                        <Input
+                          type="number"
+                          value={editingCategoryData.maxAmount}
+                          onChange={(e) => setEditingCategoryData({ ...editingCategoryData, maxAmount: parseInt(e.target.value) || 0 })}
+                          className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                        />
                       </div>
-
-                      <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" className="text-slate-400" onClick={() => setEditingCategoryId(null)}>
-                          Cancel
-                        </Button>
-                        <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white" onClick={() => {
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-[#98c1d9] text-xs">Delivery Fee</Label>
+                        <Input
+                          type="number"
+                          value={editingCategoryData.deliveryFee}
+                          onChange={(e) => setEditingCategoryData({ ...editingCategoryData, deliveryFee: parseInt(e.target.value) || 0 })}
+                          className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[#98c1d9] text-xs">Service Description</Label>
+                        <Textarea
+                          value={editingCategoryData.description || ''}
+                          onChange={(e) => setEditingCategoryData({ ...editingCategoryData, description: e.target.value })}
+                          className="bg-[#3d5a80] border-[#98c1d9]/30 text-[#e0fbfc]"
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="outline" className="text-slate-400" onClick={() => setEditingCategoryId(null)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                        onClick={async () => {
                           if (selectedCategory && editingCategoryData) {
-                            updateCategoryConfig(selectedCategory, editingCategoryData)
+                            await handleUpdateCategoryHeader(selectedCategory, editingCategoryData)
                             setEditingCategoryId(null)
                             setEditingCategoryData(null)
                           }
-                        }}>
-                          <Check className="h-4 w-4 mr-1" /> Save Changes
-                        </Button>
-                      </div>
-      </div>
-) : selectedCategory ? (
-      <>
-        {(() => {
-          const activeConfig = categoryConfigs.find(c => c.categoryKey === selectedCategory);
-          return (
-            <div className="mt-5 grid gap-3 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4 text-[#e0fbfc]">
-              <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
-                <span>Amount Range</span>
-                <span className="font-semibold text-[#e0fbfc]">
-                  P{activeConfig?.minAmount ?? 0} - P{activeConfig?.maxAmount ?? 0}
-                </span>
+                        }}
+                      >
+                        <Check className="h-4 w-4 mr-1" /> Save Changes
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-5 grid gap-3 rounded-2xl border border-[#98c1d9]/20 bg-[#1d2430] p-4 text-[#e0fbfc]">
+                    <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
+                      <span>Amount Range</span>
+                      <span className="font-semibold text-[#e0fbfc]">
+                        P{categoryConfigs.find((c) => c.categoryKey === selectedCategory)?.minAmount ?? 0} - P{categoryConfigs.find((c) => c.categoryKey === selectedCategory)?.maxAmount ?? 0}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
+                      <span>Delivery Fee</span>
+                      <span className="font-semibold text-[#e0fbfc]">P{categoryConfigs.find((c) => c.categoryKey === selectedCategory)?.deliveryFee ?? 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
+                      <span>Total Products</span>
+                      <span className="font-semibold text-[#e0fbfc]">{selectedCategoryProducts.length}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
-                <span>Delivery Fee</span>
-                <span className="font-semibold text-[#e0fbfc]">P{activeConfig?.deliveryFee ?? 0}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-[#293241] p-3">
-                <span>Total Items</span>
-                <span className="font-semibold text-[#e0fbfc]">{activeConfig?.items?.length || 0}</span>
+
+              <div className="rounded-3xl border border-[#98c1d9]/20 bg-[#293241] p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                  <div>
+                    <p className="text-sm text-[#98c1d9]">Product list for</p>
+                    <p className="text-xl font-semibold text-[#e0fbfc]">
+                      {categoryLabels[selectedCategory ?? 'snacks'] || categoryConfigs.find((c) => c.categoryKey === selectedCategory)?.categoryName || selectedCategory || 'All Categories'}
+                    </p>
+                  </div>
+                  <div className="text-sm text-[#98c1d9]">
+                    {selectedCategoryProducts.length} item{selectedCategoryProducts.length === 1 ? '' : 's'}
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-[#98c1d9]/30">
+                        <TableHead className="text-[#98c1d9]">Name</TableHead>
+                        <TableHead className="text-[#98c1d9]">Price</TableHead>
+                        <TableHead className="text-[#98c1d9]">Delivery Fee</TableHead>
+                        <TableHead className="text-[#98c1d9]">Stock State</TableHead>
+                        <TableHead className="text-right text-[#98c1d9]">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedCategoryProducts.length > 0 ? (
+                        selectedCategoryProducts.map((product) => (
+                          <TableRow key={product.id} className="border-t border-[#98c1d9]/10">
+                            <TableCell className="text-[#e0fbfc]">{product.name}</TableCell>
+                            <TableCell className="text-[#98c1d9]">P{(product.price ?? 0).toFixed(2)}</TableCell>
+                            <TableCell className="text-[#98c1d9]">P{(product.deliveryFee ?? 0).toFixed(2)}</TableCell>
+                            <TableCell className="text-[#98c1d9]">{product.stockStatus}</TableCell>
+                            <TableCell className="text-right">
+                              <Button size="sm" className="bg-[#ee6c4d] hover:bg-[#d65a31] text-white" onClick={() => handleEditProduct(product)}>
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="py-6 text-center text-sm text-[#98c1d9]">
+                            No products found for this category.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
-          );
-        })()}
-        <div className="rounded-lg bg-[#212a35] p-3 text-[#98c1d9]">
-          No service description is available for this category.
-        </div>
-      </>
-                  ) : null}
-                </div>
 
                 {showAddProductForm && (
                   <div className="rounded-3xl border border-[#98c1d9]/20 bg-[#293241] p-5">
@@ -1261,19 +1434,17 @@ return (
                         }}>
                           Cancel
                         </Button>
-                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCreateNewProduct}>
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCreateProduct}>
                           {editingProductId ? 'Update Product' : 'Save Product'}
                         </Button>
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
 
-            </div>
           </CardContent>
         </Card>
-        )}
+      )}
         {/* ========================================================================= */}
 
         {activeTab === 'customers' && (

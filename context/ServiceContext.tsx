@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect } from "react"
+import { supabase } from "@/lib/supabaseClient"
 
 // Define a unified structural blueprint for all items/products
 export interface ProductItem {
@@ -200,13 +201,47 @@ export function ServiceProvider({ children }: { children: React.ReactNode }) {
 
   // Hydrate initial dataset state safely via local storage memory lookup
   useEffect(() => {
-    const saved = localStorage.getItem("camotes_products")
-    if (saved) {
-      setProducts(JSON.parse(saved))
-    } else {
-      setProducts(initialMockProducts)
-      localStorage.setItem("camotes_products", JSON.stringify(initialMockProducts))
+    let didLoad = false
+    const loadLocal = () => {
+      const saved = localStorage.getItem("camotes_products")
+      if (saved) {
+        setProducts(JSON.parse(saved))
+      } else {
+        setProducts(initialMockProducts)
+        localStorage.setItem("camotes_products", JSON.stringify(initialMockProducts))
+      }
+      didLoad = true
     }
+
+    // Try to fetch authoritative product list from Supabase first
+    ;(async () => {
+      try {
+        const { data, error } = await supabase.from('store_services').select('*')
+        if (error) {
+          console.warn('Could not fetch products from Supabase, falling back to local data:', error)
+          loadLocal()
+        } else if (data && data.length > 0) {
+          const transformed = data.map((row: any) => ({
+            id: row.id?.toString() || crypto.randomUUID(),
+            name: row.name,
+            description: row.description || '',
+            price: row.price ?? 0,
+            deliveryFee: row.delivery_fee ?? 0,
+            stockStatus: row.stock_status ?? 'available',
+            brand: row.brand ?? undefined,
+            category: row.category || 'snacks',
+            image: row.image || undefined,
+          }))
+          setProducts(transformed)
+          localStorage.setItem('camotes_products', JSON.stringify(transformed))
+        } else {
+          loadLocal()
+        }
+      } catch (err) {
+        console.error('Supabase products fetch error, using local data:', err)
+        if (!didLoad) loadLocal()
+      }
+    })()
 
     // Load admin credentials from localStorage
     const savedAdminCreds = localStorage.getItem("camotes_admin_credentials")
@@ -239,6 +274,74 @@ export function ServiceProvider({ children }: { children: React.ReactNode }) {
     const savedCreditTransactions = localStorage.getItem("camotes_credit_transactions")
     if (savedCreditTransactions) {
       setCreditTransactions(JSON.parse(savedCreditTransactions))
+    }
+  }, [])
+
+  // Subscribe to realtime changes on the store_services table so UI updates instantly
+  useEffect(() => {
+    let channel: any = null
+    try {
+      channel = supabase.channel('public:store_services')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'store_services' }, (payload: any) => {
+          try {
+            const ev = payload.eventType || payload.event
+            const record = payload.new || payload.record || payload.data
+            if (!record) return
+
+            if (ev === 'INSERT' || ev === 'INSERT') {
+              setProducts((prev) => {
+                const next = [...prev, {
+                  id: record.id?.toString() || crypto.randomUUID(),
+                  name: record.name,
+                  description: record.description || '',
+                  price: record.price ?? 0,
+                  deliveryFee: record.delivery_fee ?? 0,
+                  stockStatus: record.stock_status ?? 'available',
+                  brand: record.brand ?? undefined,
+                  category: record.category || 'snacks',
+                  image: record.image || undefined,
+                }]
+                localStorage.setItem('camotes_products', JSON.stringify(next))
+                return next
+              })
+            } else if (ev === 'UPDATE' || ev === 'UPDATE') {
+              setProducts((prev) => {
+                const next = prev.map((p) => p.id === record.id?.toString() ? {
+                  ...p,
+                  name: record.name,
+                  description: record.description || '',
+                  price: record.price ?? 0,
+                  deliveryFee: record.delivery_fee ?? 0,
+                  stockStatus: record.stock_status ?? 'available',
+                  brand: record.brand ?? undefined,
+                  category: record.category || p.category,
+                  image: record.image || undefined,
+                } : p)
+                localStorage.setItem('camotes_products', JSON.stringify(next))
+                return next
+              })
+            } else if (ev === 'DELETE' || ev === 'DELETE') {
+              setProducts((prev) => {
+                const next = prev.filter((p) => p.id !== record.id?.toString())
+                localStorage.setItem('camotes_products', JSON.stringify(next))
+                return next
+              })
+            }
+          } catch (err) {
+            console.error('Error handling realtime payload in ServiceContext:', err)
+          }
+        })
+        .subscribe()
+    } catch (err) {
+      console.warn('Realtime subscription to store_services failed:', err)
+    }
+
+    return () => {
+      try {
+        if (channel && channel.unsubscribe) channel.unsubscribe()
+        // @ts-ignore
+        if (supabase.removeChannel) supabase.removeChannel(channel)
+      } catch (err) {}
     }
   }, [])
 
